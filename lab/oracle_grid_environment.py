@@ -104,7 +104,7 @@ class OracleGridEngineEnvironment(GridEnvironment):
         submit.append(job_file)
         logging.info('Executing %s' % (' '.join(submit)))
         out = subprocess.check_output(submit, cwd=job_dir).decode()
-        print out.strip()
+        print(out.strip())
         match = re.match(r"Your job-array (\d+)\..+ has been submitted", out)
         assert match, "Submitting job with qsub failed: '{out}'".format(**locals())
         return match.group(1)
