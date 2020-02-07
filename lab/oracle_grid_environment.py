@@ -23,10 +23,8 @@ import re
 import subprocess
 import sys
 
-from environments import GridEnvironment
-
+from lab.environments import GridEnvironment
 from lab import tools
-
 
 
 class OracleGridEngineEnvironment(GridEnvironment):
@@ -65,7 +63,7 @@ class OracleGridEngineEnvironment(GridEnvironment):
 
         self.queue = queue
         self.priority = priority
-        assert self.priority in xrange(-1023, 1024 + 1)
+        assert self.priority in range(-1023, 1024 + 1)
         self.host_spec = self._get_host_spec(host_restriction)
 
     def _get_job_params(self, step, is_last):
@@ -104,7 +102,7 @@ class OracleGridEngineEnvironment(GridEnvironment):
         submit.append(job_file)
         logging.info('Executing %s' % (' '.join(submit)))
         out = subprocess.check_output(submit, cwd=job_dir).decode()
-        print out.strip()
+        print(out.strip())
         match = re.match(r"Your job-array (\d+)\..+ has been submitted", out)
         assert match, "Submitting job with qsub failed: '{out}'".format(**locals())
         return match.group(1)
