@@ -1,7 +1,38 @@
 News
 ====
 
-v5.3 (2020-03-02)
+v5.5 (2020-03-13)
+-----------------
+
+Lab
+^^^
+* Sort numbers with suffixes (5K, 2M, 8G) and "infinity" correctly in tables.
+* Gracefully handle missing "info" or "summary" tables in HTML reports.
+* Abort if a function is passed to a ``filter_*`` kwarg.
+* Abort if a filter checks missing attribute names
+  (e.g., when passing ``filter_algorithms`` instead of ``filter_algorithm``).
+
+Downward Lab
+^^^^^^^^^^^^
+* Add example experiment for running Singularity planner images.
+
+
+v5.4 (2020-03-01)
+-----------------
+
+Lab
+^^^
+* Use newer txt2tags version and remove bundled copy.
+* Call parsers with active Python interpreter.
+* Don't call deprecated ``time.clock()`` (removed in Python 3.8).
+* Don't add Lab to ``PYTHONPATH`` in ``BaselSlurmEnvironment``.
+
+Downward Lab
+^^^^^^^^^^^^
+* Revision cache: only delete "misc" and "experiments" dirs if they exist (Maximilian Fickert).
+
+
+v5.3 (2020-02-03)
 -----------------
 
 Lab
