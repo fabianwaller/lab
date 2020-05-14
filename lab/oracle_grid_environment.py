@@ -69,8 +69,8 @@ class OracleGridEngineEnvironment(GridEnvironment):
     def _get_job_params(self, step, is_last):
         job_params = GridEnvironment._get_job_params(self, step, is_last)
 
-        job_params['logfile'] = 'driver.log'
-        job_params['errfile'] = 'driver.err'
+        job_params['logfile'] = 'slurm.log'
+        job_params['errfile'] = 'slurm.err'
         job_params['priority'] = self.priority
         job_params['queue'] = self.queue
         job_params['host_spec'] = self.host_spec
