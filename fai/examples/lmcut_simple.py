@@ -4,9 +4,9 @@
 
 import fai.environments
 from fai.experiment import SimpleFDExperiment
-# the downward-benchmarks repository must be in your PYTHONPATH to import suites
+# the downward-benchmarks repository must be in your PYTHONPATH to use fai.suites
 # see https://github.com/aibasel/downward-benchmarks
-import suites
+import fai.suites as suites
 
 # adapt paths as necessary
 REPO = '/mnt/data_server/fickert/fast-downward'
