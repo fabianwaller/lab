@@ -162,7 +162,7 @@ class CachedRevision(object):
         else:
             return self.global_rev
 
-    def cache(self, revision_cache):
+    def cache(self, revision_cache, additional_exclude_dirs=[]):
         self._path = os.path.join(revision_cache, self._hashed_name)
         if os.path.exists(self.path):
             logging.info('Revision is already cached: "%s"' % self.path)
@@ -174,7 +174,7 @@ class CachedRevision(object):
                 )
         else:
             tools.makedirs(self.path)
-            exclude_dirs = ["experiments", "misc"]
+            exclude_dirs = ["experiments", "misc"] + additional_exclude_dirs
             vcs = get_version_control_system(self.repo)
             if vcs == MERCURIAL:
                 retcode = tools.run_command(
