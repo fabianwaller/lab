@@ -224,6 +224,7 @@ class FastDownwardExperiment(Experiment):
         component_options,
         build_options=None,
         driver_options=None,
+        python2_translator=False,
     ):
         """
         Add a Fast Downward algorithm to the experiment, i.e., a
@@ -312,7 +313,7 @@ class FastDownwardExperiment(Experiment):
         ] + (driver_options or [])
         algorithm = _DownwardAlgorithm(
             name,
-            CachedFastDownwardRevision(repo, rev, build_options),
+            CachedFastDownwardRevision(repo, rev, build_options, python2_translator),
             driver_options,
             component_options,
         )

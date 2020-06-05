@@ -137,7 +137,7 @@ class CompatibleFastDownwardExperiment(FastDownwardExperiment):
 
 
     def add_compatible_algorithm(self, name, repo, rev, component_options,
-                                 build_options=None, driver_options=None):
+                                 build_options=None, driver_options=None, python2_translator=True):
         """
         Add a Fast Downward algorithm to the experiment, i.e., a
         planner configuration in a given repository at a given
@@ -251,7 +251,7 @@ class CompatibleFastDownwardExperiment(FastDownwardExperiment):
             del driver_options[i]
 
         self._algorithms[name] = _CompatibleDownwardAlgorithm(
-            name, CompatibleCachedRevision(repo, rev, build_options),
+            name, CompatibleCachedRevision(repo, rev, build_options, python2_translator),
             driver_options, component_options, time_limit=time_limit, memory_limit=memory_limit)
 
     def _add_code(self):
