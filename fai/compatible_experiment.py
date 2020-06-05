@@ -26,7 +26,6 @@ import os.path
 
 from lab.experiment import Run, Experiment, get_default_data_dir
 
-from downward.cached_revision import CachedRevision
 from downward import suites
 
 from downward.experiment import FastDownwardExperiment
@@ -63,7 +62,7 @@ class CompatibleFastDownwardRun(FastDownwardRun):
         # old driver does not delete output files; preprocessor + translator
         self.add_command('remove-output', ['rm', '-f', 'output'])
         self.add_command('remove-output-sas', ['rm', '-f', 'output.sas'])
-        
+
         # old driver does not validate
         self.add_command('validate-plan', ['validate', 'domain.pddl', 'problem.pddl', 'sas_plan'], memory_limit=4096)
 
@@ -133,7 +132,7 @@ class CompatibleFastDownwardExperiment(FastDownwardExperiment):
         """
         # only default initialization for now
         FastDownwardExperiment.__init__(self, path=path, environment=environment, revision_cache=revision_cache)
-        
+
 
     def add_compatible_algorithm(self, name, repo, rev, component_options,
                                  build_options=None, driver_options=None):
@@ -248,7 +247,7 @@ class CompatibleFastDownwardExperiment(FastDownwardExperiment):
             i = driver_options.index("--overall-memory-limit")
             del driver_options[i+1]
             del driver_options[i]
-            
+
         self._algorithms[name] = _CompatibleDownwardAlgorithm(
             name, CompatibleCachedRevision(repo, rev, build_options),
             driver_options, component_options, time_limit=time_limit, memory_limit=memory_limit)

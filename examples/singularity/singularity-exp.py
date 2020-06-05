@@ -17,7 +17,6 @@ images to a local filesystem (e.g., /tmp/) before running experiments.
 
 import os
 import platform
-import subprocess
 
 from downward import suites
 from downward.reports.absolute import AbsoluteReport
@@ -116,6 +115,5 @@ for planner, _ in IMAGES:
 
 report = os.path.join(exp.eval_dir, "{}.html".format(exp.name))
 exp.add_report(BaseReport(attributes=ATTRIBUTES), outfile=report)
-exp.add_step("open-report", subprocess.call, ["xdg-open", report])
 
 exp.run_steps()

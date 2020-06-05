@@ -16,20 +16,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-import glob
-import hashlib
 import logging
 import os.path
-import shutil
 import subprocess
 
 from lab import tools
 
-from downward.cached_revision import *
-
-
-_HG_ID_CACHE = {}
-
+from downward.cached_revision import CachedRevision
 
 
 class CompatibleCachedRevision(CachedRevision):
@@ -37,27 +30,26 @@ class CompatibleCachedRevision(CachedRevision):
 
     It provides methods for caching and compiling given revisions.
     """
-    def __init__(self, repo, local_rev, build_options):
+
+    def __init__(self, repo, rev, build_options):
         """
         * *repo*: Path to Fast Downward repository.
-        * *local_rev*: Fast Downward revision.
+        * *rev*: Fast Downward revision.
         * *build_options*: List of build.py options.
         """
-        # only default initialization for now
-        CachedRevision.__init__(self, repo=repo, local_rev=local_rev, build_options=build_options)
-        
-    def cache(self, revision_cache):
-        super().cache(revision_cache, ["benchmarks"])
+        CachedRevision.__init__(
+            self, repo, rev, ["build_all"] + build_options, ["experiments", "misc", "benchmarks"]
+        )
+        self.build_options = build_options
 
     def _compile(self):
-        if not os.path.exists(os.path.join(self.path, "src", 'build_all')):
-            logging.critical('build_all not found.')
-        retcode = tools.run_command(
-            ['./build_all'] + self.build_options, cwd=os.path.join(self.path, "src/"))
+        if not os.path.exists(os.path.join(self.path, "src", "build_all")):
+            logging.critical("build_all not found.")
+        retcode = tools.run_command(self.build_cmd, cwd=os.path.join(self.path, "src"))
         if retcode == 0:
-            tools.write_file(self._get_sentinel_file(), '')
+            tools.write_file(self._get_sentinel_file(), "")
         else:
-            logging.critical('Build failed in {}'.format(self.path))
+            logging.critical(f"Build failed in {self.path}")
 
     def _cleanup(self):
         # Remove unneeded files.
