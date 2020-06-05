@@ -28,7 +28,7 @@ class CachedFastDownwardRevision(CachedRevision):
     It provides methods for caching and compiling given revisions.
     """
 
-    def __init__(self, repo, rev, build_options):
+    def __init__(self, repo, rev, build_options, python2_translator=False):
         """
         * *repo*: Path to Fast Downward repository.
         * *rev*: Fast Downward revision.
@@ -38,6 +38,13 @@ class CachedFastDownwardRevision(CachedRevision):
             self, repo, rev, ["./build.py"] + build_options, ["experiments", "misc"]
         )
         self.build_options = build_options
+        self.python2_translator = python2_translator
+
+    def _compile(self):
+        CachedRevision._compile(self)
+        # force translator to explicitly use python2
+        if self.python2_translator:
+            tools.run_command(["sed", "-i.bak", "1s/python/python2/", "translate.py"], cwd=os.path.join(self.path, "src", "translate"))
 
     def _cleanup(self):
         # Only keep the bin directories in "builds" dir.

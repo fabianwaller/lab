@@ -31,7 +31,7 @@ class CompatibleCachedRevision(CachedRevision):
     It provides methods for caching and compiling given revisions.
     """
 
-    def __init__(self, repo, rev, build_options):
+    def __init__(self, repo, rev, build_options, python2_translator=True):
         """
         * *repo*: Path to Fast Downward repository.
         * *rev*: Fast Downward revision.
@@ -41,12 +41,17 @@ class CompatibleCachedRevision(CachedRevision):
             self, repo, rev, ["./build_all"] + build_options, ["experiments", "misc", "benchmarks"]
         )
         self.build_options = build_options
+        self.python2_translator = python2_translator
 
     def _compile(self):
         if not os.path.exists(os.path.join(self.path, "src", "build_all")):
             logging.critical("build_all not found.")
         retcode = tools.run_command(self.build_cmd, cwd=os.path.join(self.path, "src"))
         if retcode == 0:
+            # force translator to explicitly use python2
+            if self.python2_translator:
+                tools.run_command(["sed", "-i.bak", "1s/python/python2/", "translate.py"], cwd=os.path.join(self.path, "src", "translate"))
+
             tools.write_file(self._get_sentinel_file(), "")
         else:
             logging.critical(f"Build failed in {self.path}")
