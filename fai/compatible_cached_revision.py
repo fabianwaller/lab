@@ -38,7 +38,7 @@ class CompatibleCachedRevision(CachedRevision):
         * *build_options*: List of build.py options.
         """
         CachedRevision.__init__(
-            self, repo, rev, ["build_all"] + build_options, ["experiments", "misc", "benchmarks"]
+            self, repo, rev, ["./build_all"] + build_options, ["experiments", "misc", "benchmarks"]
         )
         self.build_options = build_options
 
@@ -53,17 +53,17 @@ class CompatibleCachedRevision(CachedRevision):
 
     def _cleanup(self):
         # Remove unneeded files.
-        tools.remove_path(self.get_cached_path("src/build_all"))
-        tools.remove_path(self.get_cached_path("src/cleanup"))
-        if (os.path.exists(self.get_cached_path("src/validate"))):
-            tools.remove_path(self.get_cached_path("src/validate"))
+        tools.remove_path(os.path.join(self.path, "src/build_all"))
+        tools.remove_path(os.path.join(self.path, "src/cleanup"))
+        if (os.path.exists(os.path.join(self.path, "src/validate"))):
+            tools.remove_path(os.path.join(self.path, "src/validate"))
         # Remove unneeded folder.
-        if (os.path.exists(self.get_cached_path("src/VAL/"))):
-            tools.remove_path(self.get_cached_path("src/VAL/"))
+        if (os.path.exists(os.path.join(self.path, "src/VAL/"))):
+            tools.remove_path(os.path.join(self.path, "src/VAL/"))
         # Remove .obj files.
-        if (os.path.exists(self.get_cached_path("src/preprocess/.obj/"))):
-            tools.remove_path(self.get_cached_path("src/preprocess/.obj/"))
-        tools.remove_path(self.get_cached_path("src/search/.obj/"))
+        if (os.path.exists(os.path.join(self.path, "src/preprocess/.obj/"))):
+            tools.remove_path(os.path.join(self.path, "src/preprocess/.obj/"))
+        tools.remove_path(os.path.join(self.path, "src/search/.obj/"))
 
         # Strip binaries.
         if ("--debug" in self.build_options):

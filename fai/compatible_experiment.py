@@ -37,6 +37,8 @@ from fai.compatible_cached_revision import CompatibleCachedRevision
 DIR = os.path.dirname(os.path.abspath(__file__))
 DOWNWARD_SCRIPTS_DIR = os.path.join(DIR, 'scripts')
 
+def _get_solver_resource_name(cached_rev):
+    return "fast_downward_" + cached_rev.name
 
 class CompatibleFastDownwardRun(FastDownwardRun):
     def __init__(self, exp, algo, task):
@@ -55,7 +57,7 @@ class CompatibleFastDownwardRun(FastDownwardRun):
 
         self.add_command(
             'planner',
-            ['{' + algo.cached_revision.get_planner_resource_name() + '}'] +
+            ['{' + _get_solver_resource_name(algo.cached_revision) + '}'] +
             algo.driver_options + ['{domain}', '{problem}'] + algo.component_options,
             time_limit=algo.time_limit, memory_limit=algo.memory_limit)
 
@@ -255,19 +257,18 @@ class CompatibleFastDownwardExperiment(FastDownwardExperiment):
     def _add_code(self):
         """Add the compiled code to the experiment."""
         for cached_rev in self._get_unique_cached_revisions():
-            self.add_resource(
-                '',
-                cached_rev.get_cached_path(),
-                cached_rev.get_exp_path())
+            cache_path = os.path.join(self.revision_cache, cached_rev.name)
+            dest_path = "code-" + cached_rev.name
+            self.add_resource("", cache_path, dest_path)
             if (isinstance(cached_rev, CompatibleCachedRevision)):
                 fd_file = 'src/fast-downward.py'
             else:
                 fd_file = 'fast-downward.py'
             # Overwrite the script to set an environment variable.
             self.add_resource(
-                cached_rev.get_planner_resource_name(),
-                cached_rev.get_cached_path(fd_file),
-                cached_rev.get_exp_path(fd_file))
+                _get_solver_resource_name(cached_rev),
+                os.path.join(cache_path, fd_file),
+                os.path.join(dest_path, fd_file))
 
     def _add_runs(self):
         for algo in self._algorithms.values():
