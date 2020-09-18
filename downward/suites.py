@@ -96,7 +96,9 @@ class Problem:
         if self.domain_file is None:
             domain_basenames = [
                 "domain.pddl",
+                "domain.hddl",
                 self.problem[:3] + "-domain.pddl",
+                self.problem[:3] + "-domain.hddl",
                 "domain_" + self.problem,
                 "domain-" + self.problem,
             ]
