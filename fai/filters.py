@@ -139,8 +139,8 @@ def rename_domains(run):
         'woodworking-sat11-strips' : 'Woodworking',
         'zenotravel'               : 'Zenotravel'}
     if not run['domain'] in domain_paper_names:
-        print run['domain']
-    assert run['domain'] in domain_paper_names
+        print(f'Warning: no paper name found for domain {run["domain"]}, skipped renaming.')
+        return run
     return _rename_domain(run, domain_paper_names[run['domain']])
 
 def get_group_domains_filter(domains):
