@@ -27,20 +27,12 @@ from lab.reports import Attribute, geometric_mean, markup, Report
 
 
 class PlanningReport(Report):
-    """
-    This is the base class for planner reports.
+    """Base class for planner reports."""
 
-    The :py:attr:`~INFO_ATTRIBUTES` and :py:attr:`~ERROR_ATTRIBUTES`
-    class members hold attributes for Fast Downward experiments by
-    default. You may want to adjust the two lists in derived classes.
-
-    """
-
-    #: List of predefined :py:class:`~Attribute` instances. If
+    #: List of predefined :py:class:`~Attribute` instances. For example, if
     #: PlanningReport receives ``attributes=['coverage']``, it converts
     #: the plain string ``'coverage'`` to the attribute instance
     #: ``Attribute('coverage', absolute=True, min_wins=False, scale='linear')``.
-    #: The list can be overriden in subclasses.
     PREDEFINED_ATTRIBUTES = [
         Attribute("cost", scale="linear"),
         Attribute("coverage", absolute=True, min_wins=False, scale="linear"),
@@ -57,14 +49,13 @@ class PlanningReport(Report):
         Attribute("plan_length", scale="linear"),
         Attribute("planner_time", function=geometric_mean),
         Attribute("quality", absolute=True, min_wins=False),
-        Attribute("score_*", min_wins=False, digits=4),
+        Attribute("score_*", absolute=True, min_wins=False, digits=4),
         Attribute("search_time", function=geometric_mean),
         Attribute("total_time", function=geometric_mean),
         Attribute("unsolvable", absolute=True, min_wins=False),
     ]
 
-    #: Attributes shown in the algorithm info table. Can be overriden in
-    #: subclasses.
+    #: Attributes shown in the algorithm info table.
     INFO_ATTRIBUTES = [
         "local_revision",
         "global_revision",
@@ -74,8 +65,7 @@ class PlanningReport(Report):
         "component_options",
     ]
 
-    #: Attributes shown in the unexplained-errors table. Can be overriden
-    #: in subclasses.
+    #: Attributes shown in the unexplained-errors table.
     ERROR_ATTRIBUTES = [
         "domain",
         "problem",
@@ -101,14 +91,28 @@ class PlanningReport(Report):
 
         >>> # Use a filter function to select algorithms.
         >>> def only_blind_and_lmcut(run):
-        ...     return run['algorithm'] in ['blind', 'lmcut']
+        ...     return run["algorithm"] in ["blind", "lmcut"]
         >>> report = PlanningReport(filter=only_blind_and_lmcut)
 
         >>> # Use "filter_algorithm" to select and *order* algorithms.
-        >>> r = PlanningReport(filter_algorithm=['lmcut', 'blind'])
+        >>> report = PlanningReport(filter_algorithm=["lmcut", "blind"])
 
         :py:class:`Filters <.Report>` can be very helpful so we
         recommend reading up on them to use their full potential.
+
+        Subclasses can use the member variable ``problem_runs`` to access the
+        experiment data. It is a dictionary mapping from tasks (i.e.,
+        ``(domain, problem)`` pairs) to the runs for that task. Each run is a
+        dictionary that maps from attribute names to values.
+
+        >>> class MinRuntimePerTask(PlanningReport):
+        ...     def get_text(self):
+        ...         map = {}
+        ...         for (domain, problem), runs in self.problem_runs.items():
+        ...             times = [run.get("planner_time") for run in runs]
+        ...             times = [t for t in times if t is not None]
+        ...             map[(domain, problem)] = min(times) if times else None
+        ...         return str(map)
 
         """
         # Set non-default options for some attributes.
@@ -157,25 +161,20 @@ class PlanningReport(Report):
         )
         func = logging.info if num_unexplained_errors == 0 else logging.error
         func(
-            "Report contains {num_unexplained_errors} runs with unexplained"
-            " errors.".format(**locals())
+            f"Report contains {num_unexplained_errors} runs with unexplained"
+            f" errors."
         )
 
         if len(problems) * len(self.algorithms) != len(self.runs):
             logging.warning(
-                "Not every algorithm has been run on every task. "
-                "However, if you applied a filter this is to be "
-                "expected. If not, there might be old properties in the "
-                "eval-dir that got included in the report. "
-                "Algorithms (%d): %s, problems (%d), domains (%d): %s, runs (%d)"
-                % (
-                    len(self.algorithms),
-                    self.algorithms,
-                    len(problems),
-                    len(self.domains),
-                    list(self.domains.keys()),
-                    len(self.runs),
-                )
+                f"Not every algorithm has been run on every task. "
+                f"However, if you applied a filter this is to be "
+                f"expected. If not, there might be old properties in the "
+                f"eval-dir that got included in the report. "
+                f"Algorithms ({len(self.algorithms)}): {self.algorithms}, "
+                f"problems ({len(problems)}), "
+                f"domains ({len(self.domains)}): {list(self.domains.keys())}, "
+                f"runs ({len(self.runs)})"
             )
 
         # Sort each entry in problem_runs by algorithm.
@@ -267,11 +266,11 @@ class PlanningReport(Report):
             else:
                 slurm_err_content = tools.filter_slurm_err_content(slurm_err_content)
 
-            logging.error("There was output to {slurm_err_file}.".format(**locals()))
+            logging.error(f"There was output to {slurm_err_file}.")
 
             errors.append(
-                ' Contents of {slurm_err_file} without "memory cg"'
-                " errors:\n```\n{slurm_err_content}\n```".format(**locals())
+                f' Contents of {slurm_err_file} without "memory cg"'
+                f" errors:\n```\n{slurm_err_content}\n```"
             )
 
         if table:

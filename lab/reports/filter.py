@@ -20,22 +20,22 @@ class FilterReport(Report):
     """Filter properties files.
 
     This report only applies the given filter and writes a new
-    properties file to the output destination.
+    properties file to the given output destination.
 
     >>> def remove_openstacks(run):
-    ...     return 'openstacks' not in run['domain']
+    ...     return "openstacks" not in run["domain"]
 
     >>> from lab.experiment import Experiment
     >>> report = FilterReport(filter=remove_openstacks)
     >>> exp = Experiment()
-    >>> exp.add_report(report, outfile='path/to/new/properties')
+    >>> exp.add_report(report, outfile="path/to/new/properties")
 
     """
 
+    # Without the docstring Sphinx reuses docstring from parent class.
     def __init__(self, **kwargs):
-        Report.__init__(self, **kwargs)
+        """"""
+        super().__init__(**kwargs)
 
     def get_text(self):
-        if not self.outfile.endswith("properties"):
-            raise ValueError("outfile must be a path to a properties file")
         return str(self.props)

@@ -72,35 +72,37 @@ class ScatterPlotReport(PlanningReport):
         >>> def domain_as_category(run1, run2):
         ...     # run2['domain'] has the same value, because we always
         ...     # compare two runs of the same problem.
-        ...     return run1['domain']
+        ...     return run1["domain"]
 
         Example grouping by difficulty:
 
         >>> def improvement(run1, run2):
-        ...     time1 = run1.get('search_time', 1800)
-        ...     time2 = run2.get('search_time', 1800)
+        ...     time1 = run1.get("search_time", 1800)
+        ...     time2 = run2.get("search_time", 1800)
         ...     if time1 > time2:
-        ...         return 'better'
+        ...         return "better"
         ...     if time1 == time2:
-        ...         return 'equal'
-        ...     return 'worse'
+        ...         return "equal"
+        ...     return "worse"
 
         >>> from downward.experiment import FastDownwardExperiment
         >>> exp = FastDownwardExperiment()
-        >>> exp.add_report(ScatterPlotReport(
-        ...     attributes=['search_time'],
-        ...     get_category=improvement))
+        >>> exp.add_report(
+        ...     ScatterPlotReport(attributes=["search_time"], get_category=improvement)
+        ... )
 
         Example comparing the number of expanded states for two
         algorithms:
 
-        >>> exp.add_report(ScatterPlotReport(
+        >>> exp.add_report(
+        ...     ScatterPlotReport(
         ...         attributes=["expansions_until_last_jump"],
         ...         filter_algorithm=["algorithm-1", "algorithm-2"],
         ...         get_category=domain_as_category,
         ...         format="png",  # Use "tex" for pgfplots output.
-        ...         ),
-        ...     name="scatterplot-expansions")
+        ...     ),
+        ...     name="scatterplot-expansions",
+        ... )
 
         The inherited *format* parameter can be set to 'png' (default),
         'eps', 'pdf', 'pgf' (needs matplotlib 1.2) or 'tex'. For the
@@ -122,25 +124,25 @@ class ScatterPlotReport(PlanningReport):
 
         >>> from downward.reports.scatter import ScatterPlotReport
         >>> matplotlib_options = {
-        ...     'font.family': 'serif',
-        ...     'font.weight': 'normal',
+        ...     "font.family": "serif",
+        ...     "font.weight": "normal",
         ...     # Used if more specific sizes not set.
-        ...     'font.size': 20,
-        ...     'axes.labelsize': 20,
-        ...     'axes.titlesize': 30,
-        ...     'legend.fontsize': 22,
-        ...     'xtick.labelsize': 10,
-        ...     'ytick.labelsize': 10,
-        ...     'lines.markersize': 10,
-        ...     'lines.markeredgewidth': 0.25,
-        ...     'lines.linewidth': 1,
+        ...     "font.size": 20,
+        ...     "axes.labelsize": 20,
+        ...     "axes.titlesize": 30,
+        ...     "legend.fontsize": 22,
+        ...     "xtick.labelsize": 10,
+        ...     "ytick.labelsize": 10,
+        ...     "lines.markersize": 10,
+        ...     "lines.markeredgewidth": 0.25,
+        ...     "lines.linewidth": 1,
         ...     # Width and height in inches.
-        ...     'figure.figsize': [8, 8],
-        ...     'savefig.dpi': 100,
+        ...     "figure.figsize": [8, 8],
+        ...     "savefig.dpi": 100,
         ... }
         >>> report = ScatterPlotReport(
-        ...     attributes=['initial_h_value'],
-        ...     matplotlib_options=matplotlib_options)
+        ...     attributes=["initial_h_value"], matplotlib_options=matplotlib_options
+        ... )
 
         You can see the full list of matplotlib options and their
         defaults by executing ::
@@ -243,18 +245,14 @@ class ScatterPlotReport(PlanningReport):
     def _compute_missing_value(self, categories, axis, scale):
         if not self.show_missing:
             return None
-        if not any(
-            coord[axis] is None for coords in categories.values() for coord in coords
-        ):
+        values = [coord[axis] for coords in categories.values() for coord in coords]
+        real_values = [value for value in values if value is not None]
+        if len(real_values) == len(values):
+            # The list doesn't contain None values.
             return None
-        max_value = max(
-            coord[axis]
-            for coords in categories.values()
-            for coord in coords
-            if coord[axis] is not None
-        )
-        if max_value is None:
+        if not real_values:
             return 1
+        max_value = max(real_values)
         if scale == "linear":
             return max_value * 1.1
         return int(10 ** math.ceil(math.log10(max_value)))
@@ -312,6 +310,26 @@ class ScatterPlotReport(PlanningReport):
                 new_categories[category] = coords
         return new_categories
 
+    def _compute_num_tasks_on_sides_of_line(self, categories):
+        min_wins = self.attribute.min_wins
+        x_wins = 0
+        y_wins = 0
+        for coords in categories.values():
+            for x, y in coords:
+                if x is None or y is None:
+                    continue
+                if x > y:
+                    if min_wins:
+                        y_wins += 1
+                    else:
+                        x_wins += 1
+                elif x < y:
+                    if min_wins:
+                        x_wins += 1
+                    else:
+                        y_wins += 1
+        return x_wins, y_wins
+
     def _get_category_styles(self, categories):
         """
         Create dictionary mapping from category name to marker style.
@@ -335,9 +353,18 @@ class ScatterPlotReport(PlanningReport):
             category_styles[category] = styles[i % len(styles)]
         return category_styles
 
+    def _get_axis_label(self, label, algo, num_wins):
+        if label:
+            return label
+        if self.attribute.min_wins is None:
+            return algo
+        comp = "lower" if self.attribute.min_wins else "higher"
+        return f"{algo} ({comp} for {num_wins} tasks)"
+
     def _write_plot(self, runs, filename):
         # Map category names to coord tuples.
         self.categories = self._fill_categories()
+        x_wins, y_wins = self._compute_num_tasks_on_sides_of_line(self.categories)
         if self.relative:
             self.plot_diagonal_line = False
             self.plot_horizontal_line = True
@@ -351,17 +378,18 @@ class ScatterPlotReport(PlanningReport):
             self.categories = self._handle_missing_values(self.categories)
         if not self.categories:
             logging.critical("Plot contains no points.")
+
+        self.xlabel = self._get_axis_label(self.xlabel, self.algorithms[0], x_wins)
+        self.ylabel = self._get_axis_label(self.ylabel, self.algorithms[1], y_wins)
+
         self.styles = self._get_category_styles(self.categories)
         self.writer.write(self, filename)
 
     def write(self):
         if not len(self.algorithms) == 2:
             logging.critical(
-                "Scatter plots need exactly 2 algorithms: %s" % self.algorithms
+                f"Scatter plots need exactly 2 algorithms: {self.algorithms}"
             )
-        self.xlabel = self.xlabel or self.algorithms[0]
-        self.ylabel = self.ylabel or self.algorithms[1]
-
         suffix = "." + self.output_format
         if not self.outfile.endswith(suffix):
             self.outfile += suffix

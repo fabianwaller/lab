@@ -1,5 +1,41 @@
-News
-====
+Changelog
+=========
+
+v6.2 (2020-10-20)
+-----------------
+
+Lab
+^^^
+* Reports: round values to desired precision before determining colors (Jendrik Seipp).
+* Restructure and extend documentation (Jendrik Seipp).
+* For developers: run CI tests on Ubuntu 20.04 in addition to 18.04 (Jendrik Seipp).
+
+Downward Lab
+^^^^^^^^^^^^
+* Allow adding SAS+ files with ``FastDownwardExperiment.add_suite()`` (Jendrik Seipp).
+
+
+v6.1 (2020-09-15)
+-----------------
+
+Lab
+^^^
+* Take float precision into account when highlighting table cells (Jendrik Seipp).
+* Allow serializing `pathlib.Path` objects into JSON files (Jendrik Seipp).
+* For developers: add ``.github/CONTRIBUTING.md`` file (Jendrik Seipp).
+* For developers: separate tests for Singularity and FF example experiments from other tests (Jendrik Seipp).
+* For developers: skip ``cached_revision`` doctests if ``DOWNWARD_REVISION_CACHE`` variable is not set (Jendrik Seipp).
+* For developers: use f-strings in code (Jendrik Seipp).
+
+Downward Lab
+^^^^^^^^^^^^
+* Print number of tasks above and below separator lines in scatter plots (Jendrik Seipp).
+* Ignore tasks for which runs have been filtered out in aggregate reports (Jendrik Seipp).
+* Fix order of bracketed task counts per domain in table reports (Jendrik Seipp).
+* Gracefully handle empty scatter plots (Jendrik Seipp).
+* Make ``score_*`` attributes absolute, i.e., include tasks for which not all algorithms
+  have a value in aggregations (Jendrik Seipp).
+
 
 v6.0 (2020-04-05)
 -----------------

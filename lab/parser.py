@@ -14,35 +14,32 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-Parse logs and output files.
+A parser can be any program that analyzes files in the run's directory
+(e.g. ``run.log``) and manipulates the ``properties`` file in the same
+directory.
 
-A parser can be any program that analyzes files in the run's
-directory (e.g. ``run.log``) and manipulates the ``properties``
-file in the same directory.
-
-To make parsing easier, however, you can use the ``Parser`` class. The
-parser ``examples/ff/ff-parser.py`` serves as an example:
+To make parsing easier, however, you can use the ``Parser`` class. Here is
+an example parser for the FF planner:
 
 .. literalinclude:: ../examples/ff/ff-parser.py
+   :caption:
 
-You can add this parser to alls runs by using
-:meth:`add_parser() <lab.experiment.Experiment.add_parser>`:
+You can add this parser to all runs by using :meth:`add_parser()
+<lab.experiment.Experiment.add_parser>`:
 
->>> import os.path
->>> from lab import experiment
->>> exp = experiment.Experiment()
->>> # The path can be absolute or relative to the working directory
->>> # at build time.
->>> parser = os.path.abspath(
-...     os.path.join(__file__, '../../examples/ff/ff-parser.py'))
+>>> from pathlib import Path
+>>> from lab.experiment import Experiment
+>>> exp = Experiment()
+>>> # The path can be absolute or relative to the working directory at build time.
+>>> parser = Path(__file__).resolve().parents[1] / "examples/ff/ff-parser.py"
 >>> exp.add_parser(parser)
 
-All added parsers will be run in the order in which they were added
-after executing the run's commands.
+All added parsers will be run in the order in which they were added after
+executing the run's commands.
 
 If you need to change your parsers and execute them again, use the
-:meth:`~lab.experiment.Experiment.add_parse_again_step` method to
-re-parse your results.
+:meth:`~lab.experiment.Experiment.add_parse_again_step` method to re-parse
+your results.
 
 """
 
@@ -55,6 +52,16 @@ import re
 from lab import tools
 
 
+def _get_pattern_flags(s):
+    flags = 0
+    for char in s:
+        try:
+            flags |= getattr(re, char)
+        except AttributeError:
+            logging.critical(f"Unknown pattern flag: {char}")
+    return flags
+
+
 class _Pattern:
     def __init__(self, attribute, regex, required, type_, flags):
         self.attribute = attribute
@@ -62,14 +69,8 @@ class _Pattern:
         self.required = required
         self.group = 1
 
-        flag = 0
-        for char in flags:
-            try:
-                flag |= getattr(re, char)
-            except AttributeError:
-                logging.critical(f"Unknown pattern flag: {char}")
-
-        self.regex = re.compile(regex, flag)
+        flags = _get_pattern_flags(flags)
+        self.regex = re.compile(regex, flags)
 
     def search(self, content, filename):
         found_props = {}
@@ -79,8 +80,8 @@ class _Pattern:
                 value = match.group(self.group)
             except IndexError:
                 logging.error(
-                    "Attribute %s not found for pattern %s in "
-                    "file %s" % (self.attribute, self, filename)
+                    f"Attribute {self.attribute} not found for pattern {self} in "
+                    f"file {filename}."
                 )
             else:
                 value = self.type_(value)
@@ -153,7 +154,7 @@ class Parser:
             properties[attribute] = type(match.group(1))
 
         *flags* must be a string of Python regular expression flags (see
-        https://docs.python.org/2/library/re.html). E.g., ``flags='M'``
+        https://docs.python.org/3/library/re.html). E.g., ``flags="M"``
         lets "^" and "$" match at the beginning and end of each line,
         respectively.
 
@@ -161,7 +162,7 @@ class Parser:
         an error message is printed to stderr.
 
         >>> parser = Parser()
-        >>> parser.add_pattern('facts', r'Facts: (\d+)', type=int)
+        >>> parser.add_pattern("facts", r"Facts: (\d+)", type=int)
 
         """
         if type == bool:
@@ -187,12 +188,12 @@ class Parser:
 
         >>> import re
         >>> from lab.parser import Parser
-        >>> # Example content: f=14, f=12, f=10
-        >>> def find_f_values(content, props):
-        ...     props['f_values'] = re.findall(r'f=(\d+)', content)
+        >>> def parse_states_over_time(content, props):
+        ...     matches = re.findall(r"(.+)s: (\d+) states\n", content)
+        ...     props["states_over_time"] = [(float(t), int(s)) for t, s in matches]
         ...
         >>> parser = Parser()
-        >>> parser.add_function(find_f_values)
+        >>> parser.add_function(parse_states_over_time)
 
         You can use ``props.add_unexplained_error("message")`` when your
         parsing function detects that something went wrong during the
@@ -218,14 +219,10 @@ class Parser:
                 file_parser.load_file(path)
             except OSError as err:
                 if err.errno == errno.ENOENT:
-                    logging.info(
-                        'File "{path}" is missing and thus not parsed.'.format(
-                            **locals()
-                        )
-                    )
+                    logging.info(f'File "{path}" is missing and thus not parsed.')
                     del self.file_parsers[filename]
                 else:
-                    logging.error('Failed to read "{path}": {err}'.format(**locals()))
+                    logging.error(f'Failed to read "{path}": {err}')
 
         for file_parser in self.file_parsers.values():
             self.props.update(file_parser.search_patterns())

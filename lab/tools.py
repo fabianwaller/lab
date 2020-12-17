@@ -18,6 +18,7 @@ import colorsys
 import functools
 import logging
 import os
+from pathlib import Path
 import pkgutil
 import re
 import shutil
@@ -127,7 +128,7 @@ class deprecated:
     def __call__(self, func):
         @functools.wraps(func)
         def new_func(*args, **kwargs):
-            msg = self.msg or "%s is deprecated." % (func.__name__)
+            msg = self.msg or f"{func.__name__} is deprecated."
             show_deprecation_warning(msg)
             return func(*args, **kwargs)
 
@@ -157,15 +158,13 @@ def makedirs(path):
 
 
 def confirm_or_abort(question):
-    answer = input("%s (y/N): " % question).strip()
+    answer = input(f"{question} (y/N): ").strip()
     if not answer.lower() == "y":
         sys.exit("Aborted")
 
 
 def confirm_overwrite_or_abort(path):
-    confirm_or_abort(
-        'The path "%s" already exists. Do you want to overwrite it?' % path
-    )
+    confirm_or_abort(f'The path "{path}" already exists. Do you want to overwrite it?')
 
 
 def remove_path(path):
@@ -194,10 +193,10 @@ def natural_sort(alist):
     """Sort alist alphabetically, but special-case numbers to get
     file2.txt before file10.txt.
 
-    >>> natural_sort(['file10.txt', 'file2.txt'])
+    >>> natural_sort(["file10.txt", "file2.txt"])
     ['file2.txt', 'file10.txt']
 
-    >>> natural_sort(['check', 'infinity', '1G', '3M', '2000K', '1M', '1K', '100'])
+    >>> natural_sort(["check", "infinity", "1G", "3M", "2000K", "1M", "1K", "100"])
     ['100', '1K', '1M', '2000K', '3M', '1G', 'infinity', 'check']
     """
 
@@ -217,7 +216,7 @@ def natural_sort(alist):
             return text.lower()
 
     def extract_numbers(text):
-        parts = re.split("([0-9]+[KMG]?|infinity)", text)
+        parts = re.split("([0-9]+[KMG]?|infinity)", str(text))
         return [to_int_if_number(part) for part in parts]
 
     return sorted(alist, key=extract_numbers)
@@ -233,7 +232,7 @@ def find_file(filenames, dir="."):
 
 def run_command(cmd, **kwargs):
     """Run command cmd and return the output."""
-    logging.info("Executing {} {}".format(" ".join(cmd), kwargs))
+    logging.info(f"Executing {' '.join(cmd)} {kwargs}")
     return subprocess.call(cmd, **kwargs)
 
 
@@ -250,13 +249,26 @@ def add_unexplained_error(dictionary, error):
 
 
 class Properties(dict):
+    class _PropertiesEncoder(json.JSONEncoder):
+        def default(self, o):
+            if isinstance(o, Path):
+                return str(o)
+            else:
+                return super().default(o)
+
     def __init__(self, filename=None):
         self.filename = filename
         self.load(filename)
         dict.__init__(self)
 
     def __str__(self):
-        return json.dumps(self, indent=2, separators=(",", ": "), sort_keys=True)
+        return json.dumps(
+            self,
+            cls=self._PropertiesEncoder,
+            indent=2,
+            separators=(",", ": "),
+            sort_keys=True,
+        )
 
     def load(self, filename):
         if not filename or not os.path.exists(filename):
@@ -283,7 +295,7 @@ class RunFilter:
         self.filtered_attributes = []  # Only needed for sanity checks.
         for arg_name, arg_value in kwargs.items():
             if not arg_name.startswith("filter_"):
-                logging.critical('Invalid filter keyword argument name "%s"' % arg_name)
+                logging.critical(f'Invalid filter keyword argument name "{arg_name}"')
             attribute = arg_name[len("filter_") :]
             # Add a filter for the specified property.
             self.filters.append(self._build_filter(attribute, arg_value))
@@ -323,8 +335,8 @@ class RunFilter:
         for attribute in self.filtered_attributes:
             if not any(attribute in run for run in props.values()):
                 logging.critical(
-                    'No run has the attribute "{attribute}" (from '
-                    '"filter_{attribute}"). Is this a typo?'.format(**locals())
+                    f'No run has the attribute "{attribute}" (from '
+                    f'"filter_{attribute}"). Is this a typo?'
                 )
         for filter_ in self.filters:
             for old_run_id, run in list(props.items()):
@@ -403,9 +415,7 @@ def copy(src, dest, ignores=None):
         fast_updatetree(src, dest, ignore=ignore)
     else:
         logging.critical(
-            "Path {} cannot be copied to {}".format(
-                os.path.abspath(src), os.path.abspath(dest)
-            )
+            f"Path {os.path.abspath(src)} cannot be copied to {os.path.abspath(dest)}"
         )
 
 
@@ -477,24 +487,7 @@ def product(values):
 
 
 def rgb_fractions_to_html_color(r, g, b):
-    return "rgb(%d,%d,%d)" % (r * 255, g * 255, b * 255)
-
-
-def get_terminal_size():
-    import struct
-
-    try:
-        import fcntl
-        import termios
-    except ImportError:
-        return (None, None)
-
-    try:
-        data = fcntl.ioctl(sys.stdout.fileno(), termios.TIOCGWINSZ, 4 * "00")
-        height, width = struct.unpack("4H", data)[:2]
-        return (width, height)
-    except Exception:
-        return (None, None)
+    return f"rgb({int(r * 255)},{int(g * 255)},{int(b * 255)})"
 
 
 def get_unexplained_errors_message(run):
@@ -507,8 +500,8 @@ def get_unexplained_errors_message(run):
         return ""
     else:
         return (
-            "Unexplained error(s) in {run_dir}: please inspect"
-            " output and error logs.".format(**run)
+            f"Unexplained error(s) in {run['run_dir']}: please inspect"
+            f" output and error logs."
         )
 
 
@@ -546,7 +539,7 @@ class RawAndDefaultsHelpFormatter(argparse.HelpFormatter):
 
     def __init__(self, prog, **kwargs):
         # Use the whole terminal width.
-        width, _ = get_terminal_size()
+        width = shutil.get_terminal_size().columns
         argparse.HelpFormatter.__init__(self, prog, width=width, **kwargs)
 
     def _fill_text(self, text, width, indent):
