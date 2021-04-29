@@ -18,6 +18,7 @@
 from collections import OrderedDict
 from glob import glob
 import logging
+import multiprocessing
 import os
 import subprocess
 import sys
@@ -89,6 +90,25 @@ def _check_name(name, typ, extra_chars=""):
             f"Name for {typ} may only use characters from"
             f" [A-Z], [a-z], [0-9], [{extra_chars}]: {name}"
         )
+
+
+def _run_parsers_in_dir(run_dir, index, total_dirs, resources, env_vars_relative):
+    if os.path.exists(os.path.join(run_dir, "properties")):
+        tools.remove_path(os.path.join(run_dir, "properties"))
+    loglevel = logging.INFO if index % 100 == 0 else logging.DEBUG
+    logging.log(loglevel, f"Parsing run: {index:6d}/{total_dirs:d}")
+    for resource in resources:
+        if resource.is_parser:
+            parser_filename = env_vars_relative[resource.name]
+            rel_parser = os.path.join("../../", parser_filename)
+            # Since parsers often produce output which we would
+            # rather not want to see for each individual run, we
+            # suppress it here.
+            subprocess.check_call(
+                [tools.get_python_executable(), rel_parser],
+                cwd=run_dir,
+                stdout=subprocess.DEVNULL,
+            )
 
 
 class _Resource:
@@ -457,7 +477,7 @@ class Experiment(_Buildable):
         )
         self.add_command(name, [tools.get_python_executable(), f"{{{name}}}"])
 
-    def add_parse_again_step(self):
+    def add_parse_again_step(self, num_threads=multiprocessing.cpu_count()):
         """
         Add a step that copies the parsers from their originally specified
         locations to the experiment directory and runs all of them again. This
@@ -477,24 +497,23 @@ class Experiment(_Buildable):
             run_dirs = sorted(glob(os.path.join(self.path, "runs-*-*", "*")))
 
             total_dirs = len(run_dirs)
-            logging.info(f"Parsing properties in {total_dirs:d} run directories")
-            for index, run_dir in enumerate(run_dirs, start=1):
-                if os.path.exists(os.path.join(run_dir, "properties")):
-                    tools.remove_path(os.path.join(run_dir, "properties"))
-                loglevel = logging.INFO if index % 100 == 0 else logging.DEBUG
-                logging.log(loglevel, f"Parsing run: {index:6d}/{total_dirs:d}")
-                for resource in self.resources:
-                    if resource.is_parser:
-                        parser_filename = self.env_vars_relative[resource.name]
-                        rel_parser = os.path.join("../../", parser_filename)
-                        # Since parsers often produce output which we would
-                        # rather not want to see for each individual run, we
-                        # suppress it here.
-                        subprocess.check_call(
-                            [tools.get_python_executable(), rel_parser],
-                            cwd=run_dir,
-                            stdout=subprocess.DEVNULL,
-                        )
+            logging.info(
+                f"Parsing properties in {total_dirs:d} run directories with {num_threads:d} thread(s)."
+            )
+            with multiprocessing.Pool(processes=num_threads) as pool:
+                for index, run_dir in enumerate(run_dirs, start=1):
+                    pool.apply_async(
+                        _run_parsers_in_dir,
+                        args=(
+                            run_dir,
+                            index,
+                            total_dirs,
+                            self.resources,
+                            self.env_vars_relative,
+                        ),
+                    )
+                pool.close()
+                pool.join()
 
         self.add_step("parse-again", run_parsers)
 
