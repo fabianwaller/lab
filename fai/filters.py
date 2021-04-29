@@ -147,3 +147,8 @@ def get_group_domains_filter(domains):
     def group_domains(run):
         return run if run['domain'] not in domains else _rename_domain(run, 'Others')
     return group_domains
+
+def get_is_in_suite_filter(suite):
+    def is_in_suite(run):
+        return run['domain'] in suite or f'{run["domain"]}:{run["problem"]}' in suite
+    return is_in_suite
