@@ -455,3 +455,12 @@ class BaselSlurmEnvironment(SlurmEnvironment):
     # infai_1 nodes have 61964 MiB and 16 cores => 3872.75 MiB per core
     # (see http://issues.fast-downward.org/issue733).
     DEFAULT_MEMORY_PER_CPU = "3872M"
+
+
+class FAISlurmEnvironment(SlurmEnvironment):
+    """Environment for FAI's AI group."""
+
+    DEFAULT_PARTITION = "fai0x"
+    DEFAULT_QOS = "normal"
+    DEFAULT_MEMORY_PER_CPU = "3872M"
+    DEFAULT_EXPORT = ["ALL"]
