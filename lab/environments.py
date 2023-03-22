@@ -420,7 +420,7 @@ class SlurmEnvironment(GridEnvironment):
         memory_per_cpu_kb = SlurmEnvironment._get_memory_in_kb(self.memory_per_cpu)
         job_params["soft_memory_limit"] = int(memory_per_cpu_kb * 0.98)
         # Prioritize array jobs from autonice users.
-        job_params["nice"] = 5000 if is_run_step(step) else 0
+        job_params["nice"] = 0
         job_params["environment_setup"] = self.setup
 
         if is_last and self.email:
