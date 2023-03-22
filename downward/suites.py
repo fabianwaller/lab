@@ -40,7 +40,7 @@ def find_domain_file(benchmarks_dir, domain, problem):
 def get_problem(benchmarks_dir, domain_name, problem_name):
     problem_file = os.path.join(benchmarks_dir, domain_name, problem_name)
     domain_file = None
-    if problem_file.endswith(".pddl"):
+    if problem_file.endswith(".pddl") or problem_file.endswith(".hddl"):
         domain_file = find_domain_file(benchmarks_dir, domain_name, problem_name)
     return Problem(
         domain_name, problem_name, problem_file=problem_file, domain_file=domain_file

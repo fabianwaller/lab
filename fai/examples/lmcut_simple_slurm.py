@@ -18,7 +18,8 @@ BENCHMARKS_DIR = '/mnt/data_server/eifler/downward-benchmarks'
 exp = SimpleFDExperiment(environment=FAISlurmEnvironment(
     email="eifler@cs.uni-saarland.de",
     partition="fai0x",
-    memory_per_cpu="3872M"
+    memory_per_cpu="3872M",
+    extra_options="#SBATCH -t 0-2:30:0", # set time limit to 2 hours and 30 minutes
 ))
 
 exp.add_suite(BENCHMARKS_DIR, suites.suite_optimal_strips())
