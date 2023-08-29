@@ -27,7 +27,6 @@ from lab import environments, tools
 from lab.fetcher import Fetcher
 from lab.steps import get_step, get_steps_text, Step
 
-
 # How many tasks to group into one top-level directory.
 SHARD_SIZE = 100
 
@@ -334,7 +333,7 @@ class _Buildable:
                 # Do not create a symlink if the file doesn't exist.
                 if not os.path.exists(resource.source):
                     continue
-                source = self._get_rel_path(resource.source)
+                source = self._get_abs_path(resource.source)
                 os.symlink(source, dest)
                 logging.debug(f"Linking from {source} to {dest}")
                 continue
@@ -770,11 +769,12 @@ class Run(_Buildable):
         self.add_new_file("", "run", run_script, permissions=0o755)
 
     def _prepare_env_vars(self, env_vars):
-        """Use relative filenames for paths in the experiment dir."""
+        """Use relative filenames for paths in the exp (or run dir) dir."""
         new_env_vars = {}
         for var, path in env_vars.items():
             abspath = self._get_abs_path(path)
-            if abspath.startswith(self.experiment.path):
+            if (self.experiment.environment.uses_scratch() and abspath.startswith(self.path)) or (
+                    not self.experiment.environment.uses_scratch() and abspath.startswith(self.experiment.path)):
                 new_env_vars[var] = self._get_rel_path(path)
             else:
                 new_env_vars[var] = abspath

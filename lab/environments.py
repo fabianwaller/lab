@@ -74,6 +74,9 @@ class Environment:
     def run_steps(self):
         raise NotImplementedError
 
+    def uses_scratch(self):
+        return False
+
 
 class LocalEnvironment(Environment):
     """
@@ -203,6 +206,7 @@ class GridEnvironment(Environment):
             self.RUN_JOB_BODY_TEMPLATE_FILE,
             task_order=" ".join(str(i) for i in self._get_task_order()),
             exp_path="../" + self.exp.name,
+            use_scratch="true" if self.USE_SCRATCH else "false",
             python=tools.get_python_executable(),
         )
 
@@ -285,6 +289,7 @@ class SlurmEnvironment(GridEnvironment):
     # Can be overridden in derived classes.
     DEFAULT_EXPORT = ["PATH"]
     DEFAULT_SETUP = ""
+    USE_SCRATCH = True
     JOB_HEADER_TEMPLATE_FILE = "slurm-job-header"
     RUN_JOB_BODY_TEMPLATE_FILE = "slurm-run-job-body"
     STEP_JOB_BODY_TEMPLATE_FILE = "slurm-step-job-body"
@@ -296,6 +301,7 @@ class SlurmEnvironment(GridEnvironment):
         memory_per_cpu=None,
         export=None,
         setup=None,
+        use_scratch=None,
         **kwargs,
     ):
         """
@@ -381,6 +387,8 @@ class SlurmEnvironment(GridEnvironment):
             export = self.DEFAULT_EXPORT
         if setup is None:
             setup = self.DEFAULT_SETUP
+        if use_scratch is not None:
+            self.USE_SCRATCH = use_scratch
 
         self.partition = partition
         self.qos = qos
@@ -422,6 +430,7 @@ class SlurmEnvironment(GridEnvironment):
         # Prioritize array jobs from autonice users.
         job_params["nice"] = 0
         job_params["environment_setup"] = self.setup
+        job_params["use_scratch"] = self.USE_SCRATCH
 
         if is_last and self.email:
             job_params["mailtype"] = "END,FAIL,REQUEUE,STAGE_OUT"
@@ -445,6 +454,9 @@ class SlurmEnvironment(GridEnvironment):
         match = re.match(r"Submitted batch job (\d*)", out)
         assert match, f"Submitting job with sbatch failed: '{out}'"
         return match.group(1)
+
+    def uses_scratch(self):
+        return self.USE_SCRATCH
 
 
 class BaselSlurmEnvironment(SlurmEnvironment):

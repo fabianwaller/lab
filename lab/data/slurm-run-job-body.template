@@ -7,9 +7,16 @@ function print_run_dir {
     printf "runs-%%05d-%%05d/%%05d" $LOWER $UPPER $RUN_ID
 }
 
-RUN_DIR=$(print_run_dir $SLURM_ARRAY_TASK_ID)
+RUN_DIR=$(realpath %(exp_path)s/$(print_run_dir $SLURM_ARRAY_TASK_ID))
+USE_SCRATCH=%(use_scratch)s
 
-cd "%(exp_path)s/$RUN_DIR"
+if $USE_SCRATCH ;
+then
+    cp -r $RUN_DIR $SCRATCH/$SLURM_ARRAY_TASK_ID
+    cd $SCRATCH/$SLURM_ARRAY_TASK_ID
+else
+    cd $RUN_DIR
+fi
 
 (
 "%(python)s" run
@@ -25,4 +32,9 @@ if [[ ! -s driver.log ]]; then
 fi
 if [[ ! -s driver.err ]]; then
     rm driver.err
+fi
+
+if $USE_SCRATCH ; then
+    rm -r $RUN_DIR
+    mv $SCRATCH/$SLURM_ARRAY_TASK_ID $RUN_DIR
 fi

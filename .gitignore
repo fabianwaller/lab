@@ -1,6 +1,8 @@
 *~
 *.py[cod]
 .tox/
+.idea
+.venv
 build/
 dist/
 docs/_build/
