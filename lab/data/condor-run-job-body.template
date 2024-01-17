@@ -1,0 +1,46 @@
+#! /bin/bash -l
+
+declare -a SHUFFLED_TASK_IDS=(%(task_order)s)
+
+RUN_ID=${SHUFFLED_TASK_IDS[$1]}
+
+function print_run_dir {
+    let "LOWER=((RUN_ID - 1) / 100) * 100 + 1"
+    let "UPPER=((RUN_ID + 100 - 1) / 100) * 100"
+    printf "runs-%%05d-%%05d/%%05d" $LOWER $UPPER $RUN_ID
+}
+
+RUN_DIR=$(realpath %(exp_path)s/$(print_run_dir $1))
+USE_SCRATCH=%(use_scratch)s
+CONDOR_SCRATCH_DIR=$(realpath $(pwd))
+
+if $USE_SCRATCH ;
+then
+    mv $RUN_DIR $RUN_ID
+    cd $RUN_ID
+else
+    cd $RUN_DIR
+fi
+
+(
+echo "working directory: $(pwd)"
+echo "condor process id: $1"
+"%(python)s" run
+RETCODE=$?
+if [[ $RETCODE != 0 ]]; then
+    >&2 echo "The run script finished with exit code $RETCODE"
+fi
+) > driver.log 2> driver.err
+
+# Delete empty driver files.
+if [[ ! -s driver.log ]]; then
+    rm driver.log
+fi
+if [[ ! -s driver.err ]]; then
+    rm driver.err
+fi
+
+if $USE_SCRATCH ; then
+    cd $CONDOR_SCRATCH_DIR
+    mv $RUN_ID $RUN_DIR
+fi

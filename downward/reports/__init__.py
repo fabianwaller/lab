@@ -21,6 +21,7 @@ Module that permits generating planner reports by reading properties files.
 from collections import defaultdict
 from fnmatch import fnmatch
 import logging
+import os
 
 from lab import reports, tools
 from lab.reports import Attribute, geometric_mean, markup, Report
@@ -234,8 +235,8 @@ class PlanningReport(Report):
         table = reports.Table(title="Unexplained errors")
         table.set_column_order(self.ERROR_ATTRIBUTES)
 
-        wrote_to_slurm_err = any(
-            "output-to-slurm.err" in run.get("unexplained_errors", [])
+        grid_err = any(
+            "output-to-grid-steps" in run.get("unexplained_errors", [])
             for run in self.runs.values()
         )
 
@@ -254,24 +255,20 @@ class PlanningReport(Report):
 
         errors = []
 
-        if wrote_to_slurm_err:
+        if grid_err:
             src_dir = self.eval_dir.rstrip("/")[: -len("-eval")]
             slurm_err_file = src_dir + "-grid-steps/slurm.err"
-            try:
+            if os.path.exists(slurm_err_file):
                 slurm_err_content = tools.get_slurm_err_content(src_dir)
-            except OSError:
-                slurm_err_content = (
-                    "The slurm.err file was missing while creating the report."
+                slurm_err_content = tools.filter_slurm_err_content(slurm_err_content)
+                logging.error(f"There was output to {slurm_err_file}.")
+                errors.append(
+                    f' Contents of {slurm_err_file} without "memory cg"'
+                    f" errors:\n```\n{slurm_err_content}\n```"
                 )
             else:
-                slurm_err_content = tools.filter_slurm_err_content(slurm_err_content)
-
-            logging.error(f"There was output to {slurm_err_file}.")
-
-            errors.append(
-                f' Contents of {slurm_err_file} without "memory cg"'
-                f" errors:\n```\n{slurm_err_content}\n```"
-            )
+                logging.error("Errors in Condor grid steps. Inspect *-grid-steps directory.")
+                errors.append(tools.get_condor_err_content(src_dir))
 
         if table:
             errors.append(str(table))

@@ -44,6 +44,15 @@ steps_group.add_argument(
 steps_group.add_argument(
     "--all", dest="run_all_steps", action="store_true", help="Run all steps."
 )
+ARGPARSER.add_argument(
+    "-c", "--cluster", dest="force_cluster", action="store_true", help="Run selected steps on cluster."
+)
+steps_group.add_argument(
+    "-s", "--status", dest="status", action="store_true", help="Check the status of submitted cluster jobs."
+)
+steps_group.add_argument(
+    "-r", "--remove", dest="remove", action="store_true", help="Remove cluster jobs."
+)
 
 STATIC_EXPERIMENT_PROPERTIES_FILENAME = "static-experiment-properties"
 STATIC_RUN_PROPERTIES_FILENAME = "static-properties"
@@ -610,14 +619,20 @@ class Experiment(_Buildable):
         """Parse the commandline and run selected steps."""
         ARGPARSER.epilog = get_steps_text(self.steps)
         args = ARGPARSER.parse_args()
+        if args.status:
+            self.environment.check_cluster_status()
+            return
+        if args.remove:
+            self.environment.remove_cluster_jobs(confirm=True)
+            return
         assert not args.steps or not args.run_all_steps
         if not args.steps and not args.run_all_steps:
             ARGPARSER.print_help()
             return
         # Run all steps if --all is passed.
         steps = [get_step(self.steps, name) for name in args.steps] or self.steps
-        # Use LocalEnvironment if the main experiment step is inactive.
-        if any(environments.is_run_step(step) for step in steps):
+        # Use LocalEnvironment if the main experiment step is inactive and force_cluster is False.
+        if any(environments.is_run_step(step) for step in steps) or args.force_cluster:
             env = self.environment
         else:
             env = environments.LocalEnvironment()

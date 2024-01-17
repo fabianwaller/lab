@@ -118,18 +118,16 @@ class Fetcher:
 
         # Load properties in the eval_dir if there are any already.
         combined_props = tools.Properties(os.path.join(eval_dir, "properties"))
-        fetch_from_eval_dir = not os.path.exists(
-            os.path.join(src_dir, "runs-00001-00100")
-        )
+        fetch_from_eval_dir = not os.path.exists(os.path.join(src_dir, "runs-00001-00100"))
         if fetch_from_eval_dir:
             src_props = tools.Properties(filename=os.path.join(src_dir, "properties"))
             run_filter.apply(src_props)
             combined_props.update(src_props)
             logging.info(f"Fetched properties of {len(src_props)} runs.")
         else:
-            slurm_err_content = tools.get_slurm_err_content(src_dir)
-            if slurm_err_content:
-                logging.error("There was output to *-grid-steps/slurm.err")
+            grid_err_content = tools.get_grid_error_content(src_dir)
+            if grid_err_content:
+                logging.error("Errors in grid steps. Inspect *-grid-steps directory.")
 
             new_props = tools.Properties()
             run_dirs = sorted(glob(os.path.join(src_dir, "runs-*-*", "*")))
@@ -139,8 +137,8 @@ class Fetcher:
                 loglevel = logging.INFO if index % 100 == 0 else logging.DEBUG
                 logging.log(loglevel, f"Scanning: {index:6d}/{total_dirs:d}")
                 props = self.fetch_dir(run_dir)
-                if slurm_err_content:
-                    props.add_unexplained_error("output-to-slurm.err")
+                if grid_err_content:
+                    props.add_unexplained_error("output-to-grid-steps")
                 id_string = "-".join(props["id"])
                 new_props[id_string] = props
             run_filter.apply(new_props)

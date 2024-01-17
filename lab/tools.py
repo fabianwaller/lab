@@ -24,6 +24,7 @@ import re
 import shutil
 import subprocess
 import sys
+import glob
 
 
 # Use simplejson where it's available, because it is compatible (just separately
@@ -67,7 +68,10 @@ def get_lab_path():
 
 
 def get_python_executable():
-    return sys.executable or "python"
+    # do not use sys.executable as this can be problematic if run cannot be executed in virtual environment
+    # of the build server
+    # return sys.executable or "python"
+    return "python3"
 
 
 def configure_logging(level=logging.INFO):
@@ -163,6 +167,11 @@ def confirm_or_abort(question):
         sys.exit("Aborted")
 
 
+def answer_yes(question):
+    answer = input(f"{question} (y/N): ").strip()
+    return answer.lower() == "y"
+
+
 def confirm_overwrite_or_abort(path):
     confirm_or_abort(f'The path "{path}" already exists. Do you want to overwrite it?')
 
@@ -177,8 +186,8 @@ def remove_path(path):
         shutil.rmtree(path)
 
 
-def write_file(filename, content):
-    with open(filename, "w") as f:
+def write_file(filename, content, append=False):
+    with open(filename, "a" if append else "w") as f:
         f.write(content)
 
 
@@ -492,11 +501,11 @@ def rgb_fractions_to_html_color(r, g, b):
 
 def get_unexplained_errors_message(run):
     """
-    Return an error message if an unexplained error occured in the given run,
+    Return an error message if an unexplained error occurred in the given run,
     otherwise return None.
     """
     unexplained_errors = run.get("unexplained_errors", [])
-    if not unexplained_errors or unexplained_errors == ["output-to-slurm.err"]:
+    if not unexplained_errors or unexplained_errors == ["output-to-grid-steps"]:
         return ""
     else:
         return (
@@ -517,6 +526,43 @@ def get_slurm_err_content(src_dir):
                 logging.error("Failed to read slurm.err file.")
         else:
             logging.error("File slurm.err is missing.")
+    return ""
+
+
+def get_condor_err_content(src_dir):
+    grid_steps_dir = src_dir.rstrip("/") + "-grid-steps"
+    if os.path.exists(grid_steps_dir):
+        condor_logs_dir = os.path.join(grid_steps_dir, "condor-job-logs")
+        docker_err_file = os.path.join(grid_steps_dir, "docker_stderror")
+        if os.path.exists(docker_err_file):
+            if os.path.getsize(docker_err_file) == 0:
+                os.remove(docker_err_file)
+            else:
+                logging.warning(f"Docker error: inspect {os.path.abspath(docker_err_file)}.")
+        for f in list(glob.glob(os.path.join(condor_logs_dir, '*'))):
+            if os.path.getsize(f) == 0:
+                os.remove(f)
+        num_error_files = 0
+        error_file_string = "List of non-empty Condor job error files:\n"
+        for f in list(glob.glob(os.path.join(condor_logs_dir, '*.err'))):
+            logging.error(f"Job error: inspect {os.path.abspath(f)}.")
+            error_file_string += f"{os.path.abspath(f)}\n"
+            num_error_files += 1
+        if num_error_files > 0:
+            error_string = ""
+            if num_error_files > 0:
+                error_string += error_file_string
+            return error_string
+    return ""
+
+
+def get_grid_error_content(src_dir):
+    grid_steps_dir = src_dir.rstrip("/") + "-grid-steps"
+    if os.path.exists(grid_steps_dir):
+        if os.path.exists(os.path.join(grid_steps_dir, "condor-job-logs")):
+            return get_condor_err_content(src_dir)
+        else:
+            return get_slurm_err_content(src_dir)
     return ""
 
 

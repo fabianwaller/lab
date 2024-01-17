@@ -332,7 +332,7 @@ class FastDownwardExperiment(Experiment):
                 )
         self._algorithms[name] = algorithm
 
-    def build(self, **kwargs):
+    def build(self, write_to_disk=True, **kwargs):
         """Add Fast Downward code, runs and write everything to disk.
 
         This method is called by the second experiment step.
@@ -340,6 +340,10 @@ class FastDownwardExperiment(Experiment):
         """
         if not self._algorithms:
             logging.critical("You must add at least one algorithm.")
+
+        if not write_to_disk:
+            self._add_runs()
+            return 
 
         # We convert the problems in suites to strings to avoid errors when converting
         # properties to JSON later. The clean but more complex solution would be to add

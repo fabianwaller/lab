@@ -1,0 +1,26 @@
+universe = docker
+docker_image = %(dockerimage)s
+
+batch_name = %(name)s
+executable = %(executable)s
+arguments = $(ProcId) %(jobs)d
+
+output = condor-job-logs/$(ClusterId).$(ProcId).out
+error = condor-job-logs/$(ClusterId).$(ProcId).err
+log = condor-job-logs/$(ClusterId).$(ProcId).log
+
+request_GPUs = %(gpus)d
+request_CPUs =  %(cpus)d
+request_memory = %(memory)s
+
+max_idle = 1000
+%(transfer)s
+requirements = UidDomain == "cs.uni-saarland.de"
+%(requirements)s
+getenv = %(getenv)s
++WantGPUHomeMounted = true
+
+%(mail)s
+%(extra_options)s
+
+queue %(jobs)d

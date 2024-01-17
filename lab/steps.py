@@ -46,7 +46,7 @@ class Step:
             # Free memory
             self.func = None
             if retval:
-                logging.critical(f"An error occured in step {self.name}.")
+                logging.critical(f"An error occurred in step {self.name}.")
             return retval
         except (ValueError, TypeError):
             traceback.print_exc()

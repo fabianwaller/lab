@@ -20,7 +20,7 @@ setup(
     author_email="jendrikseipp@gmail.com",
     url="https://github.com/aibasel/lab",
     license="GPL3+",
-    packages=["downward", "downward.reports", "lab", "lab.calls", "lab.reports"],
+    packages=["downward", "downward.reports", "lab", "lab.calls", "lab.reports", "fai"],
     package_data={"downward": ["scripts/*.py"], "lab": ["data/*", "scripts/*.py"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",

@@ -20,6 +20,7 @@ import subprocess
 
 from lab import tools
 from lab.cached_revision import CachedRevision
+from lab.environments import FAISlurmEnvironment, FAICondorEnvironment, within_slurm_job, within_condor_job
 
 
 class CachedFastDownwardRevision(CachedRevision):
@@ -34,9 +35,12 @@ class CachedFastDownwardRevision(CachedRevision):
         * *rev*: Fast Downward revision.
         * *build_options*: List of build.py options.
         """
-        CachedRevision.__init__(
-            self, repo, rev, ["./build.py"] + build_options, ["experiments", "misc"]
-        )
+        build_cmd = ["./build.py"] + build_options
+        if within_condor_job():
+            build_cmd.extend(["-j", str(FAICondorEnvironment.EXTRA_STEP_CPUS)])
+        if within_slurm_job():
+            build_cmd.extend(["-j", str(FAISlurmEnvironment.EXTRA_STEP_CPUS)])
+        CachedRevision.__init__(self, repo, rev, build_cmd, ["experiments", "misc"])
         self.build_options = build_options
         self.python2_translator = python2_translator
 
