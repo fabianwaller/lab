@@ -340,7 +340,7 @@ class FAISlurmEnvironment(GridEnvironment):
     STEP_JOB_BODY_TEMPLATE_FILE = "slurm-step-job-body"
 
     EXTRA_STEP_CPUS = 8
-    EXTRA_STEP_MEMORY_PER_CPU = "1G"
+    EXTRA_STEP_MEMORY_PER_CPU = "2G"
     EXTRA_STEP_PARTITION = "fai-all"
 
     def __init__(
@@ -543,9 +543,10 @@ class FAICondorEnvironment(GridEnvironment):
 
     DEFAULT_USE_BATCH_MODE = False
     DEFAULT_USE_SCRATCH = True
-    DEFAULT_DOCKERIMAGE = "janeisenhut/fai-lab:v0.2"
+    DEFAULT_DOCKERIMAGE = "janeisenhut/fai-lab:v0.3"
     DEFAULT_GETENV = ["HOME"]
     DEFAULT_GPUS = 0
+    DEFAULT_SHM = 0
 
     # Dependent on whether batch mode is enabled (without batch mode, with batch mode)
     DEFAULT_CPUS = (1, 16)
@@ -557,7 +558,7 @@ class FAICondorEnvironment(GridEnvironment):
     # For additional steps, i.e., not the main run step
     EXTRA_STEP_CPUS = 8
     EXTRA_STEP_GPUS = 0
-    EXTRA_STEP_MEMORY = "8G"
+    EXTRA_STEP_MEMORY = "16G"
 
     JOB_HEADER_TEMPLATE_FILE = "condor-job-header"
     STEP_JOB_BODY_TEMPLATE_FILE = "condor-step-job-body"
@@ -570,6 +571,7 @@ class FAICondorEnvironment(GridEnvironment):
         cpus=None,
         gpus=None,
         memory=None,
+        shm=None,
         additional_requirements=None,
         use_scratch=None,
         batch_concurrent_processes=None,
@@ -586,9 +588,13 @@ class FAICondorEnvironment(GridEnvironment):
         Furthermore, if enabled, you need to pay more attention to make sure that individual runs stick to there
         resource limits, as individual runs are not run in cgroups.
 
-        *docker_image* (default: janeisenhut/fai-lab:v0.2) must be a valid Docker image.
+        *docker_image* (default: janeisenhut/fai-lab:v0.3) must be a valid Docker image.
+        The default image contains an installation of fai-lab, which is used to run lab within the docker container,
+        e.g., to run parsers or if you want to run other steps on the cluster (e.g., the build step).
+        It should also have all dependencies you need to build and run Fast Downward and includes a plan
+        validator (/bin/validate).
         If the default image does not provide all you need, consider basing your Docker image on the default image
-        to make sure that you have everything included to run lab itself. Images can be uploaded to Docker Hub
+        to make sure that you still have everything included to run lab itself. Images can be uploaded to Docker Hub
         (see: https://htcondor.readthedocs.io/en/latest/man-pages/condor_submit.html#docker_image).
 
         *get_env* (default: HOME) list of which environment variables to export
@@ -608,6 +614,9 @@ class FAICondorEnvironment(GridEnvironment):
         for each Condor job (see https://htcondor.readthedocs.io/en/latest/man-pages/condor_submit.html#request_memory).
         If you use batch mode, this refers to the batch, not to single runs.
         Remember to leave some margin between the memory limit for the actual lab task(s) and the slurm job.
+
+        *shm* (default: 0B) is the amount of memory allocated for /dev/shm in each Condor job.
+        /dev/shm is used to provide a virtual filesystem emulated in RAM.
 
         *additional_requirements* (default: None) must be a string specifying a requirement expression
         (see https://htcondor.readthedocs.io/en/latest/man-pages/condor_submit.html#requirements).
@@ -635,6 +644,7 @@ class FAICondorEnvironment(GridEnvironment):
 
         self.cpus = cpus if cpus is not None else self.DEFAULT_CPUS[int(self.batch_mode)]
         self.memory = memory if memory is not None else self.DEFAULT_MEMORY[int(self.batch_mode)]
+        self.shm = shm if shm is not None else self.DEFAULT_SHM
         self.batch_concurrent_processes = batch_concurrent_processes if batch_concurrent_processes is not None \
             else self.DEFAULT_BATCH_CONCURRENT_PROCESSES[int(self.batch_mode)]
         self.RUN_JOB_BODY_TEMPLATE_FILE = self.DEFAULT_RUN_JOB_BODY_TEMPLATE_FILE[int(self.batch_mode)]
@@ -647,6 +657,7 @@ class FAICondorEnvironment(GridEnvironment):
         job_params["dockerimage"] = self.docker_image
         job_params["getenv"] = self.getenv
         job_params["requirements"] = self.additional_requirements
+        job_params["shm"] = str(self.shm)
 
         if is_run_step(step) and self.USE_SCRATCH:
             job_params["transfer"] = "should_transfer_files = YES\nwhen_to_transfer_output = ON_EXIT"
@@ -662,9 +673,11 @@ class FAICondorEnvironment(GridEnvironment):
             job_params["jobs"] = job_params["num_tasks"]
             job_params["executable"] = f"{job_name}.sh"
 
-        job_params["cpus"] = self.cpus if is_run_step(step) else self.EXTRA_STEP_CPUS
-        job_params["gpus"] = self.gpus if is_run_step(step) else self.EXTRA_STEP_GPUS
-        job_params["memory"] = self.memory if is_run_step(step) else self.EXTRA_STEP_MEMORY
+        job_params["cpus"] = str(step.condor_cpus if step.condor_cpus is not None
+                                 else (self.cpus if is_run_step(step) else self.EXTRA_STEP_CPUS))
+        job_params["gpus"] = str(self.gpus if is_run_step(step) else self.EXTRA_STEP_GPUS)
+        job_params["memory"] = str(step.condor_memory if step.condor_memory is not None
+                                   else (self.memory if is_run_step(step) else self.EXTRA_STEP_MEMORY))
 
         if is_last and self.email:
             job_params["mail"] = f"notification = Always\nnotify_user = {self.email}"

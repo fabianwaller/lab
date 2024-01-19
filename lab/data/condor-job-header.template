@@ -9,8 +9,8 @@ output = condor-job-logs/$(ClusterId).$(ProcId).out
 error = condor-job-logs/$(ClusterId).$(ProcId).err
 log = condor-job-logs/$(ClusterId).$(ProcId).log
 
-request_GPUs = %(gpus)d
-request_CPUs =  %(cpus)d
+request_GPUs = %(gpus)s
+request_CPUs =  %(cpus)s
 request_memory = %(memory)s
 
 max_idle = 1000
@@ -19,6 +19,7 @@ requirements = UidDomain == "cs.uni-saarland.de"
 %(requirements)s
 getenv = %(getenv)s
 +WantGPUHomeMounted = true
++DevShmSize = %(shm)s
 
 %(mail)s
 %(extra_options)s

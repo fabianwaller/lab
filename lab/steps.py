@@ -25,12 +25,17 @@ class Step:
 
         exp.add_step('show-disk-usage', subprocess.call, ['df'])
 
+    If the FAICondorEnvironment is used, you can use *condor_cpus* and *condor_memory* to override the number of cpus
+    and the amount of requested memory for this specific step. In other environments, the parameters have no effect.
+
     """
 
-    def __init__(self, name, func, *args, **kwargs):
+    def __init__(self, name, func, *args,  condor_cpus=None, condor_memory=None, **kwargs):
         assert func is not None
         self.name = name
         self.func = func
+        self.condor_cpus = condor_cpus
+        self.condor_memory = condor_memory
         self.args = args
         self.kwargs = kwargs
         self._funcname = (
