@@ -386,7 +386,7 @@ class FAISlurmEnvironment(GridEnvironment):
         processes can raise the limit.
 
         Use *export* to specify a list of environment variables that
-        should be exported from the login node to the compute nodes (default: ["PATH"]).
+        should be exported from the login node to the compute nodes (default: ["ALL"]).
 
         You can alter the environment in which the experiment runs with
         the **setup** argument. If given, it must be a string of Bash
@@ -585,7 +585,7 @@ class FAICondorEnvironment(GridEnvironment):
         reduces the overhead due to the Condor scheduler and setting up Docker containers. On the downside, it can also
         have detrimental effects due to segmentation of the available resources. It is also possible that there are not
         enough resources to run bigger batch jobs even though executing single runs would be possible.
-        Furthermore, if enabled, you need to pay more attention to make sure that individual runs stick to there
+        Furthermore, if enabled, you need to pay more attention to make sure that individual runs stick to their
         resource limits, as individual runs are not run in cgroups.
 
         *docker_image* (default: janeisenhut/fai-lab:v0.3) must be a valid Docker image.
