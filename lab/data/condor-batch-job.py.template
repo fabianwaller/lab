@@ -22,7 +22,7 @@ def process_task(index):
     shm_run_dir = os.path.join("%(exp_path)s", rel_path)
     scratch_run_dir = str(run_id)
     if use_scratch:
-        shutil.move(shm_run_dir, scratch_run_dir)
+        shutil.copytree(shm_run_dir, scratch_run_dir)
     run_dir =  scratch_run_dir if use_scratch else shm_run_dir
     error = False
     with open(os.path.join(run_dir, "driver.log"), "w") as driver_log:
@@ -41,6 +41,7 @@ def process_task(index):
         if os.path.getsize(f.name) == 0:
             os.remove(f.name)
     if use_scratch:
+        shutil.rmtree(shm_run_dir)
         shutil.move(scratch_run_dir, shm_run_dir)
     return error
 
