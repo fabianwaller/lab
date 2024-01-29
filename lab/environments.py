@@ -775,19 +775,23 @@ class FAICondorEnvironment(GridEnvironment):
             time = entry["time"]
             if printout:
                 print(f"\nChecking status for job {name} submitted on {time} (cluster id: {cluster_id})")
-            out = subprocess.check_output(["condor_q", cluster_id], stderr=subprocess.STDOUT).decode()
+            out = subprocess.check_output(["condor_q", "-global", cluster_id], stderr=subprocess.STDOUT).decode()
             lines = out.splitlines(keepends=True)
-            if len(lines) == 8 and lines[5].startswith("Total for query: 0 jobs; 0 completed, 0 removed, 0 idle, 0 running, 0 held, 0 suspended"):
+            completed_str = "Total for query: 0 jobs; 0 completed, 0 removed, 0 idle, 0 running, 0 held, 0 suspended"
+            if len(lines) == 16 and lines[5].startswith(completed_str) and lines[13].startswith(completed_str):
                 if printout:
                     print(f"\nCompleted!\n")
-            elif len(lines) == 9:
+            elif len(lines) == 17:
                 if printout:
                     print(f"\nYour job is not completed yet. Details:\n")
-                    print(lines[3] + lines[4] + lines[5] + lines[6])
+                    if lines[13].startswith(completed_str):
+                        print(lines[3] + lines[4] + lines[5] + lines[6])
+                    else:
+                        print(lines[11] + lines[12] + lines[13] + lines[14])
                 exists_running_job = True
             else:
                 if printout:
-                    print("\nSomething went wrong. Details:")
+                    print(f"\nCannot make sense of output. Output of condor_q -global {cluster_id}:")
                     print(out)
                 exists_running_job = True
         return exists_running_job
@@ -800,11 +804,19 @@ class FAICondorEnvironment(GridEnvironment):
             cluster_id = entry["cluster_id"]
             name = entry["name"]
             time = entry["time"]
-            out = subprocess.check_output(["condor_q", cluster_id], stderr=subprocess.STDOUT).decode()
-            lines = out.splitlines(keepends=True)
-            if not (len(lines) == 8 and lines[5].startswith("Total for query: 0 jobs; 0 completed, 0 removed, 0 idle, 0 running, 0 held, 0 suspended")):
+            global_out = subprocess.check_output(["condor_q", "global", cluster_id], stderr=subprocess.STDOUT).decode()
+            lines = global_out.splitlines(keepends=True)
+            completed_str = "Total for query: 0 jobs; 0 completed, 0 removed, 0 idle, 0 running, 0 held, 0 suspended"
+            if not (len(lines) == 16 and lines[5].startswith(completed_str) and lines[13].startswith(completed_str)):
                 question = f"Are you sure you want to remove job {name} (cluster id: {cluster_id}, submitted: {time})?"
                 if confirm and not tools.answer_yes(question):
+                    continue
+                local_out = subprocess.check_output(["condor_q", cluster_id], stderr=subprocess.STDOUT).decode()
+                local_lines = local_out.splitlines(keepends=True)
+                if len(local_lines) == 8 and local_lines[5].startswith(completed_str):
+                    print(f"Cannot remove cluster job {cluster_id}. Maybe the job has just finished.\n"
+                          f"Please make sure you have submitted the job from this conduit, i.e., "
+                          f"when logged in to conduit2 you cannot delete jobs submitted from conduit.")
                     continue
                 print(subprocess.check_output(["condor_rm", cluster_id], stderr=subprocess.STDOUT).decode())
 
