@@ -7,8 +7,8 @@ import fai.suites as suites
 from lab.environments import FAISlurmEnvironment
 
 # adapt paths as necessary
-REPO = '/mnt/data_server/eifler/planner/downward'
-BENCHMARKS_DIR = '/mnt/data_server/eifler/downward-benchmarks'
+REPO = '/data/eifler/planner/downward'
+BENCHMARKS_DIR = '/data/eifler/downward-benchmarks'
 
 # fai0x -> fai01-fai08
 # fai1x -> fai11-13

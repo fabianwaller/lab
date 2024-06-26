@@ -4,8 +4,8 @@ from fai.experiment import SimpleFDExperiment
 from lab.environments import FAISlurmEnvironment
 from downward.reports.absolute import AbsoluteReport
 
-REPO = '/mnt/data_server/eisenhut/planning/downward'  # https://github.com/aibasel/downward/
-BENCHMARKS_DIR = '/mnt/data_server/eisenhut/planning/downward-benchmarks'  # https://github.com/aibasel/downward-benchmarks.git
+REPO = '/data/eisenhut/planning/downward'  # https://github.com/aibasel/downward/
+BENCHMARKS_DIR = '/data/eisenhut/planning/downward-benchmarks'  # https://github.com/aibasel/downward-benchmarks.git
 
 commit = 'main'
 
