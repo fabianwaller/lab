@@ -511,15 +511,21 @@ class FAISlurmEnvironment(GridEnvironment):
             time = entry["time"]
             if printout:
                 print(f"\nChecking status for job {name} submitted on {time} (cluster id: {cluster_id})")
-            out = subprocess.check_output(["squeue", "-j", cluster_id], stderr=subprocess.STDOUT).decode()
+            result = subprocess.run(["squeue", "-j", cluster_id], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            out = result.stdout.decode()
             lines = out.splitlines(keepends=True)
-            if len(lines) == 1 and "JOBID" in lines[0]:
+            if result.returncode == 1 and len(lines) == 1 and "slurm_load_jobs error: Invalid job id specified" in lines[0]:
+                if printout:
+                    print(f"\nJob not running and not scheduled.\n")
+            elif result.returncode == 0 and len(lines) == 1 and "JOBID" in lines[0]:
                 if printout:
                     print(f"\nCompleted!\n")
-            else:
+            elif result.returncode == 0:
                 if printout:
                     print(f"\nYour job is not completed yet. Details:\n\n{out}")
                 exists_running_job = True
+            else:
+                sys.exit(f"Cannot make sense of result of query squeue -j {cluster_id}. Job could still be running.")
         return exists_running_job
 
     def remove_cluster_jobs(self, confirm=True):
@@ -530,9 +536,10 @@ class FAISlurmEnvironment(GridEnvironment):
             cluster_id = entry["cluster_id"]
             name = entry["name"]
             time = entry["time"]
-            out = subprocess.check_output(["squeue", "-j", cluster_id], stderr=subprocess.STDOUT).decode()
+            result = subprocess.run(["squeue", "-j", cluster_id], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            out = result.stdout.decode()
             lines = out.splitlines(keepends=True)
-            if not (len(lines) == 1 and "JOBID" in lines[0]):
+            if not (result.returncode == 1 or result.returncode == 0 and len(lines) == 1 and "JOBID" in lines[0]):
                 question = f"Are you sure you want to remove job {name} (cluster id: {cluster_id}, submitted: {time})?"
                 if confirm and not tools.answer_yes(question):
                     continue
