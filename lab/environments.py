@@ -550,7 +550,7 @@ class FAICondorEnvironment(GridEnvironment):
 
     DEFAULT_USE_BATCH_MODE = False
     DEFAULT_USE_SCRATCH = True
-    DEFAULT_DOCKERIMAGE = "janeisenhut/fai-lab:v0.4"
+    DEFAULT_DOCKERIMAGE = "janeisenhut/fai-lab:v0.5"
     DEFAULT_GETENV = ["HOME"]
     DEFAULT_GPUS = 0
     DEFAULT_SHM = 0
@@ -595,7 +595,7 @@ class FAICondorEnvironment(GridEnvironment):
         Furthermore, if enabled, you need to pay more attention to make sure that individual runs stick to their
         resource limits, as individual runs are not run in cgroups.
 
-        *docker_image* (default: janeisenhut/fai-lab:v0.4) must be a valid Docker image.
+        *docker_image* (default: janeisenhut/fai-lab:v0.5) must be a valid Docker image.
         The default image contains an installation of fai-lab, which is used to run lab within the docker container,
         e.g., to run parsers or if you want to run other steps on the cluster (e.g., the build step).
         It should also have all dependencies you need to build and run Fast Downward and includes a plan
