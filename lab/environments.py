@@ -464,7 +464,7 @@ class FAISlurmEnvironment(GridEnvironment):
         # Prioritize array jobs from autonice users.
         job_params["nice"] = 0
         job_params["environment_setup"] = self.setup
-        job_params["use_scratch"] = self.USE_SCRATCH
+        job_params["use_scratch"] = "yes" if self.USE_SCRATCH else "no"
         job_params["slurm_time_limit"] = f"#SBATCH -t {self.slurm_time_limit}" if self.slurm_time_limit else "### none"
 
         if is_last and self.email:
@@ -724,7 +724,7 @@ class FAICondorEnvironment(GridEnvironment):
 
     def _get_run_job_body(self):
         task_order = self._get_task_order() if self.batch_mode else " ".join(str(i) for i in self._get_task_order())
-        use_scratch_options = ("true", "True") if self.USE_SCRATCH else ("false", "False")
+        use_scratch_options = ("yes", "True") if self.USE_SCRATCH else ("no", "False")
         return tools.fill_template(
             self.RUN_JOB_BODY_TEMPLATE_FILE,
             task_order=task_order,

@@ -14,8 +14,7 @@ RUN_DIR=$(realpath %(exp_path)s/$(print_run_dir $1))
 USE_SCRATCH=%(use_scratch)s
 CONDOR_SCRATCH_DIR=$(realpath $(pwd))
 
-if $USE_SCRATCH ;
-then
+if [ "$USE_SCRATCH" = "yes" ]; then
     cp -r $RUN_DIR $RUN_ID
     cd $RUN_ID
 else
@@ -40,7 +39,7 @@ if [[ ! -s driver.err ]]; then
     rm driver.err
 fi
 
-if $USE_SCRATCH ; then
+if [ "$USE_SCRATCH" = "yes" ]; then
     rm -r $RUN_DIR
     cd $CONDOR_SCRATCH_DIR
     mv $RUN_ID $RUN_DIR
