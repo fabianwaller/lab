@@ -13,7 +13,7 @@ request_GPUs = %(gpus)s
 request_CPUs =  %(cpus)s
 request_memory = %(memory)s
 
-max_idle = 1000
+max_idle = 100
 %(transfer)s
 requirements = UidDomain == "cs.uni-saarland.de"
 %(requirements)s
