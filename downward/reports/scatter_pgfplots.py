@@ -22,7 +22,7 @@ from lab import tools
 
 class ScatterPgfplots:
     @classmethod
-    def _get_plot(cls, report):
+    def _get_plot(cls, report, format_options_by_category):
         lines = []
         options = cls._get_axis_options(report)
         if report.x_upper is not None:
@@ -31,9 +31,11 @@ class ScatterPgfplots:
             options["ymax"] = report.y_upper
         lines.append(f"\\begin{{axis}}[{cls._format_options(options)}]")
         for category, coords in sorted(report.categories.items()):
+            cat_options = format_options_by_category[category] if format_options_by_category else dict()
+            cat_options["only marks"] = True
             lines.append(
                 "\\addplot+[{}] coordinates {{\n{}\n}};".format(
-                    cls._format_options({"only marks": True}),
+                    cls._format_options(cat_options),
                     " ".join(str(c) for c in coords),
                 )
             )
@@ -73,15 +75,12 @@ class ScatterPgfplots:
             return "1e-70", "1e70"
 
     @classmethod
-    def write(cls, report, filename):
+    def write(cls, report, filename, extra_preamble, format_options_by_category):
         lines = (
-            [
-                r"\documentclass[tikz]{standalone}",
-                r"\usepackage{pgfplots}",
-                r"\begin{document}",
-                r"\begin{tikzpicture}",
-            ]
-            + cls._get_plot(report)
+            [r"\documentclass[tikz]{standalone}", r"\usepackage{pgfplots}"]
+            + [extra_preamble if extra_preamble else r""]
+            + [ r"\begin{document}", r"\begin{tikzpicture}"]
+            + cls._get_plot(report, format_options_by_category)
             + [r"\end{tikzpicture}", r"\end{document}"]
         )
         tools.makedirs(os.path.dirname(filename))

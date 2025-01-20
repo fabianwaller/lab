@@ -41,6 +41,9 @@ class ScatterPlotReport(PlanningReport):
         xlabel="",
         ylabel="",
         matplotlib_options=None,
+        preamble_extra=None,
+        remove_duplicates=False,
+        format_options_by_category=None,
         **kwargs,
     ):
         """
@@ -60,6 +63,14 @@ class ScatterPlotReport(PlanningReport):
 
         If *show_missing* is False, we only draw a point for an
         algorithm pair if both algorithms have a value.
+
+        *preamble_extra* will be added to the preamble of the pgfplotfile (only relevant for pgfplots)
+
+        *remove_dubplicates* remove duplicate coordinates for each category
+
+        *format_options_by_category* provide a dict with format options added to the add_plot command of pgfplot, e.g.
+        format_options_by_category={"myCategory1": {"mark": "diamond*", "mark options": "red"}}
+        see pgfplots manual for more info about additional options
 
         *get_category* can be a function that takes **two** runs
         (dictionaries of properties) and returns a category name. This
@@ -180,6 +191,9 @@ class ScatterPlotReport(PlanningReport):
         self.matplotlib_options = matplotlib_options or {"figure.figsize": [8, 8]}
         if "legend.loc" in self.matplotlib_options:
             logging.warning('The "legend.loc" parameter is ignored.')
+        self.preamble_extra = preamble_extra
+        self.remove_duplicates = remove_duplicates
+        self.format_options_by_category = format_options_by_category
 
     def _set_scales(self, scale):
         self.xscale = scale or self.attribute.scale or "log"
@@ -383,7 +397,12 @@ class ScatterPlotReport(PlanningReport):
         self.ylabel = self._get_axis_label(self.ylabel, self.algorithms[1], y_wins)
 
         self.styles = self._get_category_styles(self.categories)
-        self.writer.write(self, filename)
+
+        if self.remove_duplicates:
+            for cat in list(self.categories.keys()):
+                self.categories[cat] = list(dict.fromkeys(self.categories[cat]))
+
+        self.writer.write(self, filename, extra_preamble=self.preamble_extra, format_options_by_category=self.format_options_by_category)
 
     def write(self):
         if not len(self.algorithms) == 2:

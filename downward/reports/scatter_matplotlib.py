@@ -98,7 +98,7 @@ class ScatterMatplotlib:
         axes.set_ybound(upper=report.y_upper)
 
     @classmethod
-    def write(cls, report, filename):
+    def write(cls, report, filename, extra_preamble, format_options_by_category):
         MatplotlibPlot.set_rc_params(report.matplotlib_options)
         plot = MatplotlibPlot()
         if report.title:
