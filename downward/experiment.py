@@ -26,6 +26,7 @@ from downward import suites
 from downward.cached_revision import CachedFastDownwardRevision
 from lab import tools
 from lab.experiment import Experiment, get_default_data_dir, Run
+import re
 
 
 DIR = os.path.dirname(os.path.abspath(__file__))
@@ -56,6 +57,20 @@ class FastDownwardRun(Run):
             self.add_resource(
                 "problem", self.task.problem_file, "problem.pddl", symlink=True
             )
+            if hasattr(self.task, 'explanation_settings_files') and self.task.explanation_settings_files:
+                for i, settings_file in enumerate(self.task.explanation_settings_files):
+                    resource_name = f"preferences_{i+1}"
+                    filename = f"preferences_{i+1}.json"
+                    self.add_resource(
+                        resource_name, settings_file, filename, symlink=True
+                    )
+            if task.cost_bound:
+                component_options = algo.component_options
+                for i in range(len(component_options)):
+                    component_options[i] = re.sub("bound=([0-9?]+)", "bound=" + str(task.cost_bound), component_options[i])
+                # for i in range(len(component_options)):
+                #     component_options[i] = re.sub("cost_bound=([0-9?]+)", "cost_bound=" + str(task.cost_bound), component_options[i])
+
             input_files = ["{domain}", "{problem}"]
 
         self.add_command(
@@ -313,7 +328,11 @@ class FastDownwardExperiment(Experiment):
             logging.critical(f"Algorithm names must be unique: {name}")
         build_options = build_options or []
         driver_options = [
-            "--validate",
+            # "--validate",
+            # '--search-memory-limit',
+            # '5G',
+            # '--search-time-limit',
+            # '30s',
             "--overall-time-limit",
             "30m",
             "--overall-memory-limit",

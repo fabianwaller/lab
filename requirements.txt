@@ -1,0 +1,15 @@
+contourpy==1.3.1
+cycler==0.12.1
+fonttools==4.56.0
+kiwisolver==1.4.8
+-e git+ssh://git@gitlab.cs.uni-saarland.de/fai/lab.git@2b1e26f503f6b738a91362ad58cfe3af4ae36e5e#egg=lab
+matplotlib==3.10.1
+numpy==2.2.3
+packaging==24.2
+pillow==11.1.0
+pyparsing==3.2.1
+python-dateutil==2.9.0.post0
+simplejson==3.20.1
+six==1.17.0
+txt2tags==3.9
+wheel==0.45.1

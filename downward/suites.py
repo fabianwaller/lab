@@ -36,14 +36,35 @@ def find_domain_file(benchmarks_dir, domain, problem):
     domain_dir = os.path.join(benchmarks_dir, domain)
     return tools.find_file(domain_basenames, domain_dir)
 
+def find_explanation_settings_files(benchmarks_dir, domain, problem):
+    """
+    Return array of paths for the preferences files in the directory *benchmarks_dir*/*domain*
+    that match the pattern: {problem_name_without_extension}-preferences-*.json
+    """
+    problem_base = os.path.splitext(problem)[0]
+    
+    pattern = f"{problem_base}-preferences-"
+    
+    domain_dir = os.path.join(benchmarks_dir, domain)
+    
+    if not os.path.isdir(domain_dir):
+        return []
+    
+    matching_files = []
+    for filename in os.listdir(domain_dir):
+        if filename.startswith(pattern) and filename.endswith(".json"):
+            matching_files.append(os.path.join(domain_dir, filename))
+    
+    return sorted(matching_files)
 
-def get_problem(benchmarks_dir, domain_name, problem_name):
+def get_problem(benchmarks_dir, domain_name, problem_name, cost_bound=None):
     problem_file = os.path.join(benchmarks_dir, domain_name, problem_name)
     domain_file = None
     if problem_file.endswith(".pddl") or problem_file.endswith(".hddl"):
         domain_file = find_domain_file(benchmarks_dir, domain_name, problem_name)
+    explanation_settings_files = find_explanation_settings_files(benchmarks_dir, domain_name, problem_name)
     return Problem(
-        domain_name, problem_name, problem_file=problem_file, domain_file=domain_file
+        domain_name, problem_name, problem_file=problem_file, domain_file=domain_file, explanation_settings_files=explanation_settings_files, cost_bound=cost_bound
     )
 
 
@@ -80,7 +101,7 @@ class Domain:
 
 class Problem:
     def __init__(
-        self, domain, problem, problem_file, domain_file=None, properties=None
+        self, domain, problem, problem_file, domain_file=None, properties=None, explanation_settings_files=[], cost_bound=None
     ):
         """
         *domain* and *problem* are the display names of the domain and
@@ -108,10 +129,14 @@ class Problem:
         self.problem = problem
         self.problem_file = problem_file
         self.domain_file = domain_file
+        self.explanation_settings_files = explanation_settings_files
+        self.cost_bound = cost_bound
 
         self.properties = properties or {}
         self.properties.setdefault("domain", self.domain)
         self.properties.setdefault("problem", self.problem)
+        self.properties.setdefault("explanation_settings_files", self.explanation_settings_files)
+        self.properties.setdefault("cost_bound", self.cost_bound)
 
     def __str__(self):
         return (
@@ -130,8 +155,10 @@ def _generate_problems(benchmarks_dir, description):
     elif isinstance(description, Domain):
         yield from description
     elif ":" in description:
-        domain_name, problem_name = description.split(":", 1)
-        yield get_problem(benchmarks_dir, domain_name, problem_name)
+        domain_name, problem_name, cost_bound = description.split(":", 2)
+        if not cost_bound:
+            raise ValueError(f"No cost bound given in problem description: {description}")
+        yield get_problem(benchmarks_dir, domain_name, problem_name, cost_bound)
     else:
         yield from Domain(benchmarks_dir, description)
 

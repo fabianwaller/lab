@@ -1,12 +1,21 @@
-Lab and Downward Lab
-====================
+# Lab and Downward Lab fork from [Fai Lab](https://gitlab.cs.uni-saarland.de/fai/lab)
+
+## Update from upstream repo:
+
+`git fetch upstream`
+
+`git merge upstream/feature`
+
+`git push`
+
+---
 
 **Lab** is a Python package for evaluating solvers on benchmark sets.
 Experiments can run on a single machine or on a computer cluster. The
 package also contains code for parsing results and creating reports.
 
 The **Downward Lab** Python package facilitates running experiments for
-the `Fast Downward <http://www.fast-downward.org>`_ planning system. It
+the `Fast Downward <http://www.fast-downward.org>`\_ planning system. It
 uses the generic experimentation package **Lab**. Currently, Lab and
 Downward Lab are distributed together.
 
