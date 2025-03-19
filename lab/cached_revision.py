@@ -195,20 +195,48 @@ class CachedRevision:
                     cwd=self.repo,
                 )
             elif vcs == GIT:
-                tar_archive = os.path.join(self.path, "solver.tgz")
-                cmd = ["git", "archive", "--format", "tar", self.global_rev]
-                with open(tar_archive, "w") as f:
-                    retcode = tools.run_command(cmd, stdout=f, cwd=self.repo)
-
+                clone_path = os.path.join(self.path, "repo_clone")
+                
+                clone_cmd = ["git", "clone", "--recurse-submodules", self.repo, clone_path]
+                retcode = tools.run_command(clone_cmd)
+                
                 if retcode == 0:
-                    with tarfile.open(tar_archive) as tf:
-                        tf.extractall(self.path)
-                    tools.remove_path(tar_archive)
-
-                    for exclude_dir in self.exclude:
-                        path = os.path.join(self.path, exclude_dir)
-                        if os.path.exists(path):
-                            tools.remove_path(path)
+                    checkout_cmd = ["git", "checkout", self.global_rev]
+                    retcode = tools.run_command(checkout_cmd, cwd=clone_path)
+                    
+                    if retcode == 0:
+                        update_submodule_cmd = ["git", "submodule", "update", "--recursive"]
+                        tools.run_command(update_submodule_cmd, cwd=clone_path)
+                        
+                        # Copy everything without .git directory
+                        for root, dirs, files in os.walk(clone_path):
+                            if '.git' in dirs:
+                                dirs.remove('.git')
+                            
+                            rel_path = os.path.relpath(root, clone_path)
+                            if rel_path == '.':
+                                rel_path = ''
+                            
+                            dest_dir = os.path.join(self.path, rel_path)
+                            if not os.path.exists(dest_dir):
+                                os.makedirs(dest_dir)
+                            
+                            for file in files:
+                                src_file = os.path.join(root, file)
+                                dest_file = os.path.join(dest_dir, file)
+                                shutil.copy2(src_file, dest_file)
+                        
+                        shutil.rmtree(clone_path)
+                        
+                        for exclude_dir in self.exclude:
+                            path = os.path.join(self.path, exclude_dir)
+                            if os.path.exists(path):
+                                tools.remove_path(path)
+                    else:
+                        shutil.rmtree(clone_path)
+                        logging.critical(f"Failed to checkout global rev {self.global_rev}.")
+                else:
+                    logging.critical("Failed to clone repository.")
             else:
                 _raise_unknown_vcs_error(vcs)
 

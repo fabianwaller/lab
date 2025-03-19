@@ -11,3 +11,5 @@ examples/ff/data/
 examples/singularity/data/
 examples/vertex-cover/data/
 lab.egg-info/
+.DS_Store
+.vscode
