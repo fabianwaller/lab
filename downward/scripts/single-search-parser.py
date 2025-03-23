@@ -51,7 +51,7 @@ PATTERNS = [
     ("total_time", r"Total time: (.+)s", float),
     ("number_mugs", r"#MUGS: (\d+)", int),
     ("translator_task_size", r"Translator task size: (\d+)", int),
-
+    ("mugs_time", r"Search time: (.+)s", float),
 ]
 
 

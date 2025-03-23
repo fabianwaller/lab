@@ -3,6 +3,7 @@
 .tox/
 .idea
 .venv
+venv
 build/
 dist/
 docs/_build/
