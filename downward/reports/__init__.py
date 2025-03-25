@@ -51,8 +51,12 @@ class PlanningReport(Report):
         Attribute("planner_time", function=geometric_mean),
         Attribute("quality", absolute=True, min_wins=False),
         Attribute("score_*", absolute=True, min_wins=False, digits=4),
-        Attribute("search_time", function=geometric_mean),
-        Attribute("total_time", function=geometric_mean),
+        Attribute("search_time", function=geometric_mean, min_wins=True),
+        Attribute("total_time", function=geometric_mean, min_wins=True),
+        Attribute("mugs_computation_time", function=geometric_mean, min_wins=True),
+        Attribute("solver_calls_count", function=geometric_mean, min_wins=True),
+        Attribute("scc_count", absolute=True, function=geometric_mean),
+        Attribute("average_scc_size", absolute=True, function=geometric_mean),
         Attribute("unsolvable", absolute=True, min_wins=False),
     ]
 

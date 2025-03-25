@@ -10,7 +10,7 @@ from downward.reports.absolute import AbsoluteReport
 
 REPO = '/data/waller/symbolic-xaip'
 BENCHMARKS_DIR = '/data/waller/classical-domains/classical'
-SUITE= '/data/waller/suite75.txt'
+SUITE= '/data/waller/suite25.txt'
 
 commit = 'quickxplain'
 
@@ -36,7 +36,7 @@ exp.add_algorithm('weakening', REPO, commit, component_options=['--search', 'sfw
 exp.add_algorithm('strengthening', REPO, commit, component_options=['--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, weakening=false, quickxplain=false)'],build_options=[], driver_options=driver_options)
 
 for i in range(5):
-    exp.add_algorithm(f'quickxplain {i + 1}', REPO, commit, component_options=[f'preferences_{i+1}.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true)'],build_options=[], driver_options=driver_options)
+    exp.add_algorithm(f'qx {i + 1}', REPO, commit, component_options=[f'preferences_{i+1}.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true)'],build_options=[], driver_options=driver_options)
 
 class BaseReport(AbsoluteReport):
     INFO_ATTRIBUTES = ["limit_search_time", "limit_search_memory", "algorithm"]
@@ -54,8 +54,8 @@ all_attributes = ['coverage', 'error', 'exit_code', 'search_time', 'total_time',
 
 # advanced version that enumerates mugs can show found mugs over time
 
-exp.add_report(BaseReport(attributes=all_attributes), outfile="base_report.html")
+exp.add_report(BaseReport(attributes=all_attributes), outfile="report.html")
 
-# exp.add_report(AbsoluteReport(format='tex', attributes=all_attributes))
+exp.add_report(AbsoluteReport(format='tex', attributes=all_attributes))
 
 exp.run_steps()
