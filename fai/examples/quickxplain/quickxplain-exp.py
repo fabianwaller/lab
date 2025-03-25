@@ -8,7 +8,7 @@ from downward.reports.absolute import AbsoluteReport
 # BENCHMARKS_DIR = '/Users/fabianwaller/planning.domains/classical'# https://github.com/aibasel/downward-benchmarks.git
 # SUITE= '/Users/fabianwaller/Developer/api-tools/suite.txt'
 
-REPO = '/data/waller/symbolic-xaip'
+REPO = '/data/waller/actions-runner/_work/symbolic-xaip/symbolic-xaip'
 BENCHMARKS_DIR = '/data/waller/classical-domains/classical'
 SUITE= '/data/waller/suite25.txt'
 
