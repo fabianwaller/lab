@@ -49,9 +49,14 @@ PATTERNS = [
     _get_states_pattern("reopened_until_last_jump", "Reopened until last jump:"),
     ("search_time", r"Search time: (.+)s", float),
     ("total_time", r"Total time: (.+)s", float),
-    ("number_mugs", r"#MUGS: (\d+)", int),
+    ("mugs_count", r"#MUGS: (\d+)", int),
+    ("hard_goals_count", r"#hard goals: (\d+)", int),
+    ("soft_goals_count", r"#soft goals: (\d+)", int),
+    ("scc_count", r"#SCC: (\d+)", int),
+    ("average_scc_size", r"Average SCC size: (\d+)", int),
+    ("solver_calls_count", r"#Solver Calls: (\d+)", int),
     ("translator_task_size", r"Translator task size: (\d+)", int),
-    ("mugs_time", r"Search time: (.+)s", float),
+    ("mugs_computation_time", r"MUGS computation time: ([0-9.]+)s", float),
 ]
 
 

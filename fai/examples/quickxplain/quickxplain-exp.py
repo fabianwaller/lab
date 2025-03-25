@@ -35,15 +35,8 @@ exp.add_algorithm('weakening', REPO, commit, component_options=['--search', 'sfw
 
 exp.add_algorithm('strengthening', REPO, commit, component_options=['--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, weakening=false, quickxplain=false)'],build_options=[], driver_options=driver_options)
 
-exp.add_algorithm('quickxplain 1', REPO, commit, component_options=['preferences_1.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true)'],build_options=[], driver_options=driver_options)
-
-exp.add_algorithm('quickxplain 2', REPO, commit, component_options=['preferences_2.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true)'],build_options=[], driver_options=driver_options)
-
-exp.add_algorithm('quickxplain 3', REPO, commit, component_options=['preferences_3.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true)'],build_options=[], driver_options=driver_options)
-
-exp.add_algorithm('quickxplain 4', REPO, commit, component_options=['preferences_4.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true)'],build_options=[], driver_options=driver_options)
-
-exp.add_algorithm('quickxplain 5', REPO, commit, component_options=['preferences_5.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true)'],build_options=[], driver_options=driver_options)
+for i in range(5):
+    exp.add_algorithm(f'quickxplain {i + 1}', REPO, commit, component_options=[f'preferences_{i+1}.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true)'],build_options=[], driver_options=driver_options)
 
 class BaseReport(AbsoluteReport):
     INFO_ATTRIBUTES = ["limit_search_time", "limit_search_memory", "algorithm"]
@@ -56,7 +49,10 @@ class BaseReport(AbsoluteReport):
         "node"
     ]
 
-all_attributes = ['coverage', 'error', 'exit_code', 'search_time', 'total_time', 'number_mugs', 'mugs_time']
+
+all_attributes = ['coverage', 'error', 'exit_code', 'search_time', 'total_time', 'hard_goals_count', 'soft_goals_count', 'mugs_count', 'mugs_computation_time', 'solver_calls_count', 'scc_count', 'average_scc_size']
+
+# advanced version that enumerates mugs can show found mugs over time
 
 exp.add_report(BaseReport(attributes=all_attributes), outfile="base_report.html")
 
