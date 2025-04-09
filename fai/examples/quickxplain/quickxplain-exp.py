@@ -55,7 +55,7 @@ class BaseReport(AbsoluteReport):
     ]
 
 
-all_attributes = ['coverage', 'error', 'exit_code', 'search_time', 'total_time', 'hard_goals_count', 'soft_goals_count', 'mugs_count', 'mugs_computation_time','mugs_computation_time_mean', 'solver_calls_count', 'scc_count', 'average_scc_size']
+all_attributes = ['coverage', 'error', 'exit_code', 'search_time', 'total_time', 'hard_goals_count', 'soft_goals_count', 'mugs_count', 'mugs_computation_time', 'solver_calls_count', 'scc_count', 'average_scc_size']
 
 # advanced version that enumerates mugs can show found mugs over time
 
