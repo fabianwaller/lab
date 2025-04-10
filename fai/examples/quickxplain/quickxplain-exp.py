@@ -4,15 +4,15 @@ from fai.experiment import SimpleFDExperiment
 from lab.environments import FAISlurmEnvironment, LocalEnvironment
 from downward.reports.absolute import AbsoluteReport
 
-# SYMBOLIC_XAIP_REPO = '/Users/fabianwaller/Downloads/qx'  # https://github.com/aibasel/downward/
+# SYMBOLIC_XAIP_REPO = '/Users/fabianwaller/Developer/symbolic-xaip'  # https://github.com/aibasel/downward/
 # DOWNWARD_XAIP_REPO = '/Users/fabianwaller/Developer/downward-xaip'
 # BENCHMARKS_DIR = '/Users/fabianwaller/planning.domains/classical'# https://github.com/aibasel/downward-benchmarks.git
-# SUITE= '/Users/fabianwaller/Developer/api-tools/suite25test.txt'
+# SUITE = '/Users/fabianwaller/Developer/api-tools/testsuite.txt'
 
 SYMBOLIC_XAIP_REPO = '/data/waller/actions-runner/_work/symbolic-xaip/symbolic-xaip'
 DOWNWARD_XAIP_REPO = '/data/waller/downward-xaip'
 BENCHMARKS_DIR = '/data/waller/classical-domains/classical'
-SUITE= '/data/waller/suite25.txt'
+SUITE = '/data/waller/suite25.txt'
 
 commit = 'quickxplain'
 
@@ -39,9 +39,11 @@ exp.add_algorithm('weakening', SYMBOLIC_XAIP_REPO, commit, component_options=['-
 
 exp.add_algorithm('strengthening', SYMBOLIC_XAIP_REPO, commit, component_options=['--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, weakening=false, quickxplain=false)'],build_options=[], driver_options=driver_options)
 
-
 for i in range(5):
     exp.add_algorithm(f'qx {i + 1}', SYMBOLIC_XAIP_REPO, commit, component_options=[f'preferences_{i+1}.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true)'],build_options=[], driver_options=driver_options)
+
+for i in range(5):
+    exp.add_algorithm(f'eqx {i + 1}', SYMBOLIC_XAIP_REPO, commit, component_options=[f'preferences_{i+1}.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true, enumerate=true)'],build_options=[], driver_options=driver_options)
 
 class BaseReport(AbsoluteReport):
     INFO_ATTRIBUTES = ["limit_search_time", "limit_search_memory", "algorithm"]
