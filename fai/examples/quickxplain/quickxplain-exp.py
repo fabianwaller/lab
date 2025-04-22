@@ -45,6 +45,9 @@ for i in range(5):
 for i in range(5):
     exp.add_algorithm(f'eqx {i + 1}', SYMBOLIC_XAIP_REPO, commit, component_options=[f'preferences_{i+1}.json', '--search', 'sfw(non_stop=true, bound=10, all_soft_goals=true, quickxplain=true, enumerate=true)'],build_options=[], driver_options=driver_options)
 
+
+exp.add_parser(exp.ANYTIME_SEARCH_PARSER)
+
 class BaseReport(AbsoluteReport):
     INFO_ATTRIBUTES = ["limit_search_time", "limit_search_memory", "algorithm"]
     ERROR_ATTRIBUTES = [

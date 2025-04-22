@@ -48,6 +48,14 @@ def reduce_to_min(list_name, single_name):
 
     return reduce_to_minimum
 
+def reduce_to_max(list_name, single_name):
+    def reduce_to_maximum(content, props):
+        values = props.get(list_name, [])
+        if values:
+            props[single_name] = max(values)
+
+    return reduce_to_maximum
+
 
 def coverage(content, props):
     props["coverage"] = int("cost" in props)
@@ -62,6 +70,10 @@ def main():
     parser.add_function(reduce_to_min("cost:all", "cost"))
     parser.add_function(reduce_to_min("steps:all", "steps"))
     parser.add_function(coverage)
+    parser.add_function(find_all_matches("mugs_count:all", r"#MUGS: (\d+)", int))
+    parser.add_function(reduce_to_max("mugs_count:all", "mugs_count"))
+    parser.add_function(find_all_matches("mugs_computation_time:all", r"MUGS computation time: ([0-9.]+)s", type=float))
+    parser.add_function(reduce_to_max("mugs_computation_time:all", "mugs_computation_time"))
     parser.parse()
 
 
